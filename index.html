@@ -3,95 +3,136 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#081018">
+<meta name="theme-color" content="#0b1218">
 <link rel="manifest" href="manifest.webmanifest">
-<title>ADAPT-X V8.1 3D</title>
+<title>ADAPT-X V9 — Battle Royale Vertical Slice</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#081018;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-#game{position:fixed;inset:0;touch-action:none}
-#hud{position:fixed;inset:0;pointer-events:none;z-index:5}
-.top{display:flex;gap:6px;padding:10px}.chip{background:#0b1420dd;border:1px solid #29405b;border-radius:12px;padding:7px 9px;font-size:11px;min-width:70px;text-align:center}.chip b{display:block;font-size:14px}
-#aiStatus{position:absolute;left:10px;right:10px;top:66px;background:#0b1420e6;border:1px solid #2e4660;border-radius:12px;padding:8px 10px;font-size:11px;color:#b8c7d8}
-#aiStatus strong{color:#ffd56c}
-#phase{position:absolute;right:10px;top:116px;background:#173323dd;border:1px solid #2d7450;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:800}
-#crosshair{position:absolute;left:50%;top:48%;width:20px;height:20px;transform:translate(-50%,-50%)}
-#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff}
-#crosshair:before{width:20px;height:2px;top:9px;left:0}#crosshair:after{width:2px;height:20px;left:9px;top:0}
-#message{position:absolute;left:12px;right:12px;bottom:146px;background:#08111be6;border:1px solid #2b4058;border-radius:12px;padding:8px 10px;font-size:11px;color:#c1cedc}
-#brainBtn{position:absolute;right:12px;bottom:98px;pointer-events:auto;background:#201936;border:1px solid #59478a;color:#d9ccff;border-radius:12px;padding:10px 12px;font-weight:800}
-.controls{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:space-between;align-items:end;padding:0 10px;pointer-events:auto}
-.dpad{display:grid;grid-template-columns:repeat(3,48px);gap:4px}.dpad button,.act{height:48px;border-radius:14px;border:1px solid #31475f;background:#122031e8;color:#fff;font-weight:900;font-size:16px}.dpad .x{visibility:hidden}
-.actions{display:grid;grid-template-columns:72px 72px;gap:6px}.actions .act{font-size:12px}.actions .fire{height:70px;background:#722a43;border-color:#a44161;font-size:15px}
-#drop,#brain,#end{position:fixed;inset:0;background:#06101be9;z-index:20;display:grid;place-items:center;padding:16px}
-.panel{width:min(440px,100%);background:#0d1825;border:1px solid #32475f;border-radius:20px;padding:18px}
-.panel h2{margin:4px 0 8px}.panel p{color:#aebed0;font-size:13px;line-height:1.45}
-.landgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.landgrid button,.primary{border:1px solid #314b66;background:#142337;color:#fff;border-radius:13px;padding:12px 8px;font-weight:900}
-.landgrid small{display:block;color:#93a6bc;font-weight:500;margin-top:4px}.primary{width:100%;background:#6d50f3;border:0;margin-top:12px}
-#brain,#end{display:none}.rows{margin-top:10px}.row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #22354b;padding:9px 0;font-size:12px}.muted{color:#9aabc0}
-@media(max-width:390px){.top{padding:7px;gap:4px}.chip{min-width:63px;padding:6px 5px;font-size:9px}.chip b{font-size:12px}#aiStatus{top:58px}.dpad{grid-template-columns:repeat(3,44px)}.dpad button,.act{height:44px}.actions{grid-template-columns:66px 66px}.actions .fire{height:66px}}
+:root{--panel:#0b1420e8;--line:#2d435a;--text:#f6f8fb;--muted:#9db0c4;--danger:#e84b64;--good:#20c67a;--accent:#e4b65b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1218;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button{font:inherit}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+.topbar{position:absolute;left:8px;right:8px;top:8px;display:flex;gap:6px;align-items:flex-start}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:6px 8px;min-width:66px;font-size:9px;color:var(--muted);backdrop-filter:blur(6px)}
+.stat b{display:block;color:white;font-size:13px;margin-top:1px}
+.brand{margin-left:auto;background:#0a121bd9;border:1px solid #314960;border-radius:12px;padding:6px 9px;text-align:right}
+.brand b{display:block;font-size:13px;letter-spacing:1px}.brand small{color:#9db0c4;font-size:8px;letter-spacing:1px}
+#aiBanner{position:absolute;left:9px;right:9px;top:62px;background:#0b1420dd;border:1px solid #2b4159;border-radius:11px;padding:7px 10px;font-size:10px;color:#b9c7d7;backdrop-filter:blur(5px)}
+#aiBanner strong{color:#ffd774}
+#minimap{position:absolute;right:10px;top:103px;width:105px;height:105px;border-radius:50%;border:2px solid #70849a;background:#16242fd9;overflow:hidden;box-shadow:0 4px 14px #0007}
+#mapPlayer,#mapZone,#mapRival{position:absolute;transform:translate(-50%,-50%)}
+#mapZone{left:50%;top:50%;width:82%;height:82%;border:2px solid #36d998;border-radius:50%}
+#mapPlayer{width:9px;height:9px;background:white;border-radius:50%;z-index:3}
+#mapPlayer:after{content:"";position:absolute;width:2px;height:14px;background:#fff;left:3px;top:-10px;transform-origin:bottom}
+#mapRival{width:8px;height:8px;background:#ef4c68;border-radius:50%;display:none}
+#alive{position:absolute;right:24px;top:214px;font-size:10px;background:#0b1420dd;border:1px solid #2b4159;border-radius:999px;padding:6px 8px}
+#crosshair{position:absolute;left:50%;top:49%;width:24px;height:24px;transform:translate(-50%,-50%);transition:.15s}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 2px #000}
+#crosshair:before{left:0;top:11px;width:24px;height:2px}#crosshair:after{left:11px;top:0;width:2px;height:24px}
+#crosshair.ads{transform:translate(-50%,-50%) scale(.72)}
+#hitmarker{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) rotate(45deg);width:22px;height:22px;opacity:0}
+#hitmarker:before,#hitmarker:after{content:"";position:absolute;background:#fff}.hitmarkerOn{animation:hm .18s}@keyframes hm{50%{opacity:1}}
+#message{position:absolute;left:16%;right:16%;bottom:148px;text-align:center;font-size:10px;text-shadow:0 2px 4px #000;min-height:15px}
+#weaponHud{position:absolute;right:11px;bottom:153px;background:#07111bdc;border:1px solid #31465c;border-radius:12px;padding:7px 10px;text-align:right}
+#weaponHud b{font-size:18px}#weaponHud small{display:block;color:#aab8c8;font-size:8px}
+#brainBtn{position:absolute;right:12px;bottom:208px;pointer-events:auto;border:1px solid #4f426f;background:#211936dc;color:#d8cdff;border-radius:11px;padding:7px 9px;font-size:10px;font-weight:900}
+#controls{position:absolute;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));height:130px;pointer-events:none}
+#joyBase{position:absolute;left:18px;bottom:8px;width:112px;height:112px;border-radius:50%;background:#0a141db3;border:1px solid #405268;pointer-events:auto;touch-action:none}
+#joyKnob{position:absolute;left:50%;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);border-radius:50%;background:#273a4ddd;border:1px solid #6d8298}
+.action{position:absolute;pointer-events:auto;border:1px solid #40536b;background:#102033dc;color:#fff;border-radius:50%;font-weight:900;touch-action:none}
+#fire{right:18px;bottom:28px;width:76px;height:76px;background:#722b42e8;border-color:#a44a66;font-size:13px}
+#ads{right:102px;bottom:73px;width:51px;height:51px;font-size:10px}
+#reload{right:102px;bottom:16px;width:48px;height:48px;font-size:9px}
+#jump{right:162px;bottom:75px;width:46px;height:46px;font-size:9px}
+#crouch{right:163px;bottom:20px;width:46px;height:46px;font-size:9px}
+#loot{right:215px;bottom:73px;width:45px;height:45px;font-size:9px}
+#heal{right:215px;bottom:20px;width:45px;height:45px;font-size:9px}
+#smoke{right:265px;bottom:20px;width:44px;height:44px;font-size:9px}
+#lookZone{position:absolute;left:38%;right:0;top:95px;bottom:140px;pointer-events:auto;touch-action:none}
+
+.overlay{position:fixed;inset:0;background:#07111be9;z-index:30;display:grid;place-items:center;padding:16px}
+.overlay.hidden{display:none}.panel{width:min(450px,100%);max-height:92vh;overflow:auto;background:#0e1925;border:1px solid #344b63;border-radius:20px;padding:18px;box-shadow:0 18px 55px #0008}
+.kicker{font-size:9px;letter-spacing:1.4px;color:#c8b5ff;font-weight:900}.panel h2{font-size:25px;margin:5px 0 8px}.panel p{font-size:12px;line-height:1.5;color:#aab9ca}
+.landGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.land{border:1px solid #38516b;background:#142337;color:#fff;border-radius:13px;padding:12px 8px;font-weight:900}.land small{display:block;color:#96a9bd;font-size:10px;font-weight:500;margin-top:4px}
+.primary{width:100%;border:0;border-radius:13px;padding:12px;background:#7254ef;color:#fff;font-weight:900}
+.row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #24364a;padding:9px 0;font-size:11px}
+.hypo{margin:10px 0;padding:8px 9px;border-left:3px solid #6c83ff;background:#101b27}.hypo b{display:block;font-size:11px}.hypo span{font-size:9px;color:#95a8bd}
+#endOverlay{display:none}
+@media(max-width:390px){
+ .topbar{gap:4px}.stat{min-width:57px;padding:5px 5px}.stat b{font-size:11px}.brand{padding:5px 6px}.brand b{font-size:11px}
+ #minimap{width:88px;height:88px;top:99px}#alive{top:193px}
+ #joyBase{width:102px;height:102px;left:12px}#joyKnob{width:44px;height:44px}
+ #fire{width:68px;height:68px;right:12px}.action{transform:scale(.92)}
+ #message{left:24%;right:24%}
+}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 
 <div id="hud">
-  <div class="top">
-    <div class="chip">❤️ HP<b id="hp">100</b></div>
-    <div class="chip">🦺 ARMOR<b id="armor">0</b></div>
-    <div class="chip">🔫 WEAPON<b id="weapon">Pistol</b></div>
-    <div class="chip">⭕ ZONE<b id="zone">100%</b></div>
+  <div class="topbar">
+    <div class="stat">❤️ HP<b id="hp">100</b></div>
+    <div class="stat">🦺 ARMOR<b id="armor">0</b></div>
+    <div class="stat">⭕ ZONE<b id="zone">100%</b></div>
+    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V9</b></div>
   </div>
-  <div id="aiStatus">Rival status: <strong>observing your battle-royale behavior</strong></div>
-  <div id="phase">DROP</div>
-  <div id="crosshair"></div>
-  <div id="message">Choose your landing point.</div>
-  <button id="brainBtn">🧠 AI BRAIN</button>
-  <div class="controls">
-    <div class="dpad">
-      <button class="x"></button><button data-key="forward">▲</button><button class="x"></button>
-      <button data-key="left">◀</button><button data-key="back">▼</button><button data-key="right">▶</button>
-    </div>
-    <div class="actions">
-      <button class="act fire" id="fire">🎯 FIRE</button>
-      <button class="act" id="loot">🎒 LOOT</button>
-      <button class="act" id="heal">💉 HEAL</button>
-      <button class="act" id="smoke">☁️ SMOKE</button>
+  <div id="aiBanner">Rival AI: <strong>observing your battle behavior</strong></div>
+  <div id="minimap"><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
+  <div id="alive">12 ALIVE</div>
+  <div id="crosshair"></div><div id="hitmarker"></div>
+  <div id="message">Choose a landing area.</div>
+  <div id="weaponHud"><small id="weaponName">PISTOL</small><b><span id="mag">12</span>/<span id="reserve">36</span></b></div>
+  <button id="brainBtn">🧠 AI</button>
+  <div id="lookZone"></div>
+  <div id="controls">
+    <div id="joyBase"><div id="joyKnob"></div></div>
+    <button class="action" id="fire">🎯<br>FIRE</button>
+    <button class="action" id="ads">ADS</button>
+    <button class="action" id="reload">↻<br>RLD</button>
+    <button class="action" id="jump">JUMP</button>
+    <button class="action" id="crouch">CROUCH</button>
+    <button class="action" id="loot">LOOT</button>
+    <button class="action" id="heal">HEAL</button>
+    <button class="action" id="smoke">SMOKE</button>
+  </div>
+</div>
+
+<div class="overlay" id="dropOverlay">
+  <div class="panel">
+    <div class="kicker">ADAPT-X V9 · BATTLE ROYALE VERTICAL SLICE</div>
+    <h2>Choose your drop</h2>
+    <p>This build is designed to feel like a real third-person survival shooter, not an AI dashboard. Your drop, combat range, rotations, ADS use, cover behavior and healing decisions quietly train the Rival AI.</p>
+    <div class="landGrid">
+      <button class="land" data-land="town">OLD TOWN<small>hot · dense buildings · AR/SMG</small></button>
+      <button class="land" data-land="ridge">NORTH RIDGE<small>high ground · sniper loot</small></button>
+      <button class="land" data-land="farm">GREEN FARM<small>safe · balanced loot</small></button>
+      <button class="land" data-land="harbor">HARBOR<small>medium · open sightlines</small></button>
     </div>
   </div>
 </div>
 
-<div id="drop">
+<div class="overlay hidden" id="brainOverlay">
   <div class="panel">
-    <div style="font-size:10px;color:#bdaaff;font-weight:900">ADAPT-X V8.1 · 3D BATTLE ROYALE</div>
-    <h2>Choose your landing</h2>
-    <p>Real-time 3D battle-royale prototype. Use ▲/▼ to move, ◀/▶ to turn, or swipe the 3D view left/right to look around. Your decisions feed the persistent AI model.</p>
-    <div class="landgrid">
-      <button data-land="riverside">RIVERSIDE<small>balanced · river cover</small></button>
-      <button data-land="ridge">RIDGE CAMP<small>sniper · high ground</small></button>
-      <button data-land="warehouse">WAREHOUSE<small>hot drop · close fight</small></button>
-      <button data-land="farm">FARM<small>safer · balanced</small></button>
-    </div>
-  </div>
-</div>
-
-<div id="brain">
-  <div class="panel">
-    <div style="font-size:10px;color:#bdaaff;font-weight:900">CONTEXTUAL AI BRAIN</div>
-    <h2 id="brainTitle">Building your player model</h2>
-    <p id="brainText">Play naturally. The rival needs evidence before it starts player-specific counters.</p>
-    <div class="rows" id="brainRows"></div>
-    <p class="muted" id="counterText"></p>
+    <div class="kicker">ADAPT-X INTELLIGENCE</div>
+    <h2 id="brainTitle">Building player model</h2>
+    <p id="brainText">Play naturally. The AI is collecting contextual evidence.</p>
+    <div id="brainRows"></div>
+    <div id="hypotheses"></div>
+    <p id="counterText"></p>
     <button class="primary" id="closeBrain">BACK TO MATCH</button>
   </div>
 </div>
 
-<div id="end">
+<div class="overlay" id="endOverlay">
   <div class="panel">
     <h2 id="endTitle"></h2>
     <p id="endText"></p>
-    <button class="primary" id="next">NEXT MATCH</button>
+    <button class="primary" id="nextMatch">NEXT MATCH</button>
   </div>
 </div>
 
-<script type="module" src="app.js"></script>
-</body></html>
+<script type="module" src="app.js?v=9"></script>
+</body>
+</html>
