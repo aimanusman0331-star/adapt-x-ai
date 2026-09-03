@@ -1,8 +1,11 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import {GLTFLoader} from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-import {SkeletonUtils} from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/utils/SkeletonUtils.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 const $=id=>document.getElementById(id);
+window.__ADAPTX_BOOTED__=true;
+const bootBox=document.getElementById('bootError');
+if(bootBox) bootBox.style.display='none';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const lerp=(a,b,t)=>a+(b-a)*t;
 
@@ -90,7 +93,9 @@ loader.load('https://threejs.org/examples/models/gltf/Soldier.glb',gltf=>{
  soldierTemplate=gltf.scene;soldierClips=gltf.animations;
  soldierTemplate.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
  replaceActor(playerActor,0x4b64d1,true);enemyActors.forEach((a,i)=>replaceActor(a,i===0?0xa12d3f:0x555555,false));
-},()=>{},()=>{});
+},()=>{},(err)=>{
+ console.warn('Soldier model failed to load; procedural survivor fallback remains active.',err);
+});
 
 function makeActor(color){const root=new THREE.Group();const vis=fallbackActor(color);root.add(vis);root.userData.visual=vis;root.userData.mixer=null;root.userData.action=null;scene.add(root);return root}
 function replaceActor(root,color,isPlayer){
@@ -337,7 +342,10 @@ look.addEventListener('pointercancel',e=>{if(e.pointerId===lookId)lookId=null});
 
 $('fire').addEventListener('pointerdown',rayShoot);$('reload').onclick=reload;$('loot').onclick=lootNearby;$('heal').onclick=heal;$('smoke').onclick=smoke;$('jump').onclick=jump;$('crouch').onclick=crouch;
 $('ads').onclick=()=>{s.ads=!s.ads;$('ads').style.background=s.ads?'#35536add':'#102033dc';$('crosshair').classList.toggle('ads',s.ads);record(s.ads?'ads:yes':'ads:no')};
-document.querySelectorAll('[data-land]').forEach(b=>b.onclick=()=>spawnMatch(b.dataset.land));
+document.querySelectorAll('[data-land]').forEach(b=>b.addEventListener('click',()=>{
+ msg('Deploying to '+b.textContent.trim().split('\n')[0]+'…');
+ spawnMatch(b.dataset.land);
+}));
 $('brainBtn').onclick=()=>{$('brainOverlay').classList.remove('hidden');updateAIUI()};$('closeBrain').onclick=()=>$('brainOverlay').classList.add('hidden');$('nextMatch').onclick=resetMatch;
 
 let last=performance.now();
