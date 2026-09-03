@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b1218">
 <link rel="manifest" href="manifest.webmanifest">
-<title>ADAPT-X V9 — Battle Royale Vertical Slice</title>
+<title>ADAPT-X V9.1 — Battle Royale Vertical Slice</title>
 <style>
 :root{--panel:#0b1420e8;--line:#2d435a;--text:#f6f8fb;--muted:#9db0c4;--danger:#e84b64;--good:#20c67a;--accent:#e4b65b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -76,7 +76,7 @@ button{font:inherit}
     <div class="stat">❤️ HP<b id="hp">100</b></div>
     <div class="stat">🦺 ARMOR<b id="armor">0</b></div>
     <div class="stat">⭕ ZONE<b id="zone">100%</b></div>
-    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V9</b></div>
+    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V9.1</b></div>
   </div>
   <div id="aiBanner">Rival AI: <strong>observing your battle behavior</strong></div>
   <div id="minimap"><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
@@ -101,7 +101,7 @@ button{font:inherit}
 
 <div class="overlay" id="dropOverlay">
   <div class="panel">
-    <div class="kicker">ADAPT-X V9 · BATTLE ROYALE VERTICAL SLICE</div>
+    <div class="kicker">ADAPT-X V9.1 · BATTLE ROYALE VERTICAL SLICE</div>
     <h2>Choose your drop</h2>
     <p>This build is designed to feel like a real third-person survival shooter, not an AI dashboard. Your drop, combat range, rotations, ADS use, cover behavior and healing decisions quietly train the Rival AI.</p>
     <div class="landGrid">
@@ -133,6 +133,25 @@ button{font:inherit}
   </div>
 </div>
 
-<script type="module" src="app.js?v=9"></script>
+<div id="bootError" style="display:none;position:fixed;left:12px;right:12px;bottom:155px;z-index:60;background:#521d2a;color:#fff;border:1px solid #a64b64;border-radius:12px;padding:10px;font:12px system-ui"></div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<script>
+window.addEventListener('error', function(e){
+  const box=document.getElementById('bootError');
+  if(box){box.style.display='block';box.textContent='Game startup error: '+(e.message||'Unknown error');}
+});
+window.addEventListener('unhandledrejection', function(e){
+  const box=document.getElementById('bootError');
+  if(box){box.style.display='block';box.textContent='Game startup error: '+(e.reason?.message||e.reason||'Unknown module error');}
+});
+</script>
+<script type="module" src="app.js?v=91"></script>
 </body>
 </html>
