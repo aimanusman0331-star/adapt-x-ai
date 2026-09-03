@@ -7,21 +7,34 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x90b6cc);
-scene.fog=new THREE.Fog(0x90b6cc,55,150);
+scene.background=new THREE.Color(0x9fc9df);
+scene.fog=new THREE.Fog(0x9fc9df,90,190);
 
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,300);
 
 scene.add(new THREE.HemisphereLight(0xddeeff,0x334422,2.2));
 const sun=new THREE.DirectionalLight(0xffffff,2.4);sun.position.set(30,45,20);sun.castShadow=true;scene.add(sun);
 
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:0x486447,roughness:1}));
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:0x527a4d,roughness:1}));
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 
 function box(x,z,w,d,h,color=0x6a5c4c){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color}));
   m.position.set(x,h/2,z);m.castShadow=m.receiveShadow=true;scene.add(m);return m;
 }
+
+function sign(text,x,z,color=0x243649){
+ const pole=new THREE.Mesh(new THREE.BoxGeometry(.25,3,.25),new THREE.MeshStandardMaterial({color:0x3e3025}));
+ pole.position.set(x,1.5,z);scene.add(pole);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(4,1.4,.3),new THREE.MeshStandardMaterial({color}));
+ board.position.set(x,3.3,z);board.castShadow=true;scene.add(board);
+ return board;
+}
+sign('RIVERSIDE',-38,-9,0x315a75);
+sign('RIDGE',5,-19,0x4b5e3b);
+sign('WAREHOUSE',44,-8,0x66513e);
+sign('FARM',-4,19,0x526443);
+
 const buildings=[
  box(-26,-18,15,12,8),box(8,-30,18,13,8),box(31,-8,20,15,10),box(-4,30,19,13,8),
  box(-36,14,10,10,6),box(28,28,12,10,7)
@@ -73,10 +86,10 @@ const W={
  Sniper:{dmg:43,range:72,acc:.64,ammo:8}
 };
 const LAND={
- riverside:{p:[-28,0,-16],tag:'balanced'},
- ridge:{p:[8,0,-31],tag:'highground'},
- warehouse:{p:[31,0,-8],tag:'hot'},
- farm:{p:[-3,0,31],tag:'safe'}
+ riverside:{p:[-38,0,-8],tag:'balanced'},
+ ridge:{p:[6,0,-18],tag:'highground'},
+ warehouse:{p:[44,0,-7],tag:'hot'},
+ farm:{p:[-4,0,19],tag:'safe'}
 };
 
 let s={match:1,hp:100,armor:0,aHp:100,aArmor:25,weapon:'Pistol',ammo:12,meds:1,smokes:0,zone:100,phase:'DROP',landed:false,ended:false,smoked:false,turn:0};
@@ -190,6 +203,7 @@ function aiThink(dt){
    else if(baseline.aggression==='hold'){target=player.position.clone().add(new THREE.Vector3(8,0,5))}
  }
  const dir=target.clone().sub(rival.position);dir.y=0;if(dir.length()>3){dir.normalize();rival.position.addScaledVector(dir,baseline?.weapon==='long'?3.5:2.8)}
+ const face=player.position.clone().sub(rival.position);rival.rotation.y=Math.atan2(-face.x,-face.z);
  const nd=rival.position.distanceTo(player.position);
  if(nd<38){
    let hit=.45;if(s.smoked)hit-=.25;if(baseline?.aggression==='push')hit+=.08;
@@ -197,15 +211,19 @@ function aiThink(dt){
  }
 }
 function cameraFollow(){
- const back=new THREE.Vector3(Math.sin(yaw)*-10,6,Math.cos(yaw)*10);
- const desired=player.position.clone().add(back);camera.position.lerp(desired,.12);
- const look=player.position.clone().add(new THREE.Vector3(0,2.2,0));camera.lookAt(look)
+ const back=new THREE.Vector3(Math.sin(yaw)*-14,11,Math.cos(yaw)*14);
+ const desired=player.position.clone().add(back);
+ camera.position.lerp(desired,.16);
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+ const look=player.position.clone().add(forward.multiplyScalar(4)).add(new THREE.Vector3(0,2.0,0));
+ camera.lookAt(look)
 }
 function movePlayer(dt){
  if(!s.landed||s.ended)return;
  let turn=0;if(keys.left)turn+=1;if(keys.right)turn-=1;yaw+=turn*dt*2.4;
  let f=0;if(keys.forward)f+=1;if(keys.back)f-=1;
  if(f!==0){
+   player.rotation.y=yaw;
    const dir=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)).multiplyScalar(f*moveSpeed*dt);
    const before=player.position.distanceTo(rival.position);player.position.add(dir);player.position.x=Math.max(-48,Math.min(48,player.position.x));player.position.z=Math.max(-48,Math.min(48,player.position.z));
    const after=player.position.distanceTo(rival.position);if(Math.random()<.08)record(after<before?'push':'hold')
@@ -213,6 +231,22 @@ function movePlayer(dt){
 }
 function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
+
+
+let lookPointer=null,lookX=0;
+canvas.addEventListener('pointerdown',e=>{
+ if(e.clientY>innerHeight-165)return;
+ lookPointer=e.pointerId;lookX=e.clientX;
+ canvas.setPointerCapture?.(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+ if(lookPointer!==e.pointerId)return;
+ const dx=e.clientX-lookX;lookX=e.clientX;
+ yaw-=dx*0.008;
+});
+function stopLook(e){if(lookPointer===e.pointerId)lookPointer=null}
+canvas.addEventListener('pointerup',stopLook);
+canvas.addEventListener('pointercancel',stopLook);
 
 document.querySelectorAll('[data-key]').forEach(b=>{
  const k=b.dataset.key;const on=e=>{e.preventDefault();keys[k]=true},off=e=>{e.preventDefault();keys[k]=false};
@@ -229,4 +263,4 @@ function animate(now){
  const dt=Math.min(.04,(now-last)/1000);last=now;movePlayer(dt);aiThink(dt);cameraFollow();zoneTimer+=dt;if(zoneTimer>9&&s.landed&&!s.ended){zoneTimer=0;rotateZone();updateHUD()}
  renderer.render(scene,camera);requestAnimationFrame(animate)
 }
-camera.position.set(-8,8,12);updateHUD();updateBrain();requestAnimationFrame(animate);
+camera.position.set(-38,11,6);updateHUD();updateBrain();requestAnimationFrame(animate);
