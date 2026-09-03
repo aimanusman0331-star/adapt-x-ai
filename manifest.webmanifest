@@ -1,1 +1,1 @@
-{"name": "ADAPT-X V6", "short_name": "ADAPT-X", "start_url": "./", "display": "standalone", "background_color": "#071019", "theme_color": "#071019", "description": "Adaptive battle AI with recent-window second-order strategy-shift detection"}
+{"name":"ADAPT-X V7 Battle Royale AI","short_name":"ADAPT-X","start_url":"./","display":"standalone","background_color":"#071019","theme_color":"#071019","description":"PUBG-style battle royale prototype with contextual second-order adaptive AI"}
