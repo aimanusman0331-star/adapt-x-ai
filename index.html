@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#071019">
+<link rel="manifest" href="manifest.webmanifest">
+<title>ADAPT-X V6</title>
+<style>
+:root{
+  --bg:#071019;--panel:#0d1722;--line:#223349;--text:#f6f8fb;--muted:#92a2b8;
+  --good:#12c777;--danger:#ff4568;--accent:#7b5cff;--gold:#f4a51c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;overscroll-behavior:none}
+.app{max-width:560px;margin:auto;padding:9px 9px 24px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:3px 2px 6px}
+.brand small{display:block;color:#8da0b9;letter-spacing:2px;font-size:9px}.brand b{font-size:20px;letter-spacing:1.4px}
+.online{font-size:10px;color:#aab8c9;border:1px solid #25374e;border-radius:999px;padding:6px 9px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:7px}
+.tab{border:1px solid #223349;background:#0b151f;color:#8394aa;border-radius:11px;padding:8px 5px;font-size:10px;font-weight:800}
+.tab.active{background:#211936;color:#d4c8ff;border-color:#49386c}
+.page{display:none}.page.active{display:block}
+.hud{display:grid;grid-template-columns:1.2fr .9fr .9fr .9fr;gap:5px;margin-bottom:6px}
+.hud>div{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:6px 4px;text-align:center;font-size:9px;color:var(--muted)}
+.hud b{display:block;color:#fff;font-size:13px;margin-top:2px;white-space:nowrap}
+.gameShell{background:#0b151f;border:1px solid #25364b;border-radius:18px;padding:6px}
+.aiRibbon{min-height:31px;border-radius:11px;background:#101b27;border:1px solid #243951;margin-bottom:6px;padding:7px 10px;font-size:11px;color:#b7c4d4;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.aiRibbon strong{color:#ffd36b}.aiRibbon .mode{font-size:9px;color:#9bb0c7;white-space:nowrap}
+.arena{position:relative;aspect-ratio:1.16/1;background:
+ radial-gradient(circle at 22% 25%,#254a2f 0 9%,transparent 10%),
+ radial-gradient(circle at 77% 70%,#234a31 0 8%,transparent 9%),
+ linear-gradient(25deg,#17261f 0 28%,#16222d 28% 58%,#1b261e 58% 100%);
+ border-radius:15px;overflow:hidden;touch-action:none}
+.texture{position:absolute;inset:0;background:
+ linear-gradient(#ffffff08 1px,transparent 1px),
+ linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+ background-size:8% 8%;opacity:.45}
+.road{position:absolute;width:120%;height:12%;left:-10%;top:46%;background:#59616b55;transform:rotate(-10deg);border-top:1px solid #ffffff14;border-bottom:1px solid #ffffff14}
+.building{position:absolute;background:#514e44;border:2px solid #786f5d;border-radius:5px;box-shadow:0 4px 0 #171c22}
+.b1{left:17%;top:23%;width:23%;height:16%}.b2{right:12%;top:18%;width:24%;height:14%}.b3{right:18%;bottom:17%;width:28%;height:15%}
+.tree{position:absolute;width:22px;height:22px;border-radius:50%;background:#275d39;border:4px solid #173c28;box-shadow:0 0 0 2px #0e2b1b}
+.t1{left:10%;top:63%}.t2{left:49%;top:15%}.t3{left:57%;top:72%}
+.zone{position:absolute;border:3px dashed #00d38b;border-radius:50%;left:8%;top:8%;width:84%;height:84%;transition:all .35s ease;box-shadow:0 0 22px #00d38b22}
+.zonePulse{position:absolute;border-radius:50%;left:8%;top:8%;width:84%;height:84%;box-shadow:0 0 0 999px #bf24421a;pointer-events:none;transition:all .35s ease}
+.unit{position:absolute;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;transform:translate(-50%,-50%);z-index:5;transition:left .22s,top .22s}
+.unit::after{content:"";position:absolute;width:7px;height:14px;border-radius:3px;top:27px;background:#202733}
+.you{background:#7857ff;border:3px solid #c9baff}.ai{background:#f24164;border:3px solid #ffb2c1}
+.unit span{font-size:17px}.name{position:absolute;top:40px;font-size:8px;font-weight:900;white-space:nowrap;text-shadow:0 1px 2px #000}
+.loot{position:absolute;z-index:3;width:29px;height:29px;border-radius:8px;background:#f2a514;color:#1b1306;display:grid;place-items:center;font-size:14px;transform:translate(-50%,-50%);box-shadow:0 3px 10px #0005}
+#ammoLoot{left:78%;top:52%}#medLoot{left:42%;top:67%;background:#dfe9ee}
+.bullet{position:absolute;width:7px;height:7px;border-radius:50%;background:#fff4a6;box-shadow:0 0 8px #ffd44a;z-index:7;transform:translate(-50%,-50%);pointer-events:none}
+.damage{position:absolute;z-index:12;color:#fff;font-weight:900;font-size:16px;text-shadow:0 2px 4px #000;transform:translate(-50%,-50%);animation:float .7s forwards}
+@keyframes float{to{opacity:0;transform:translate(-50%,-95%)}}
+.flash{position:absolute;inset:0;pointer-events:none;z-index:8;opacity:0}.flash.hit{animation:hit .22s}@keyframes hit{50%{opacity:1;background:#ff314033}}
+.toast{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:9;background:#08121ee9;border:1px solid #314861;border-radius:999px;padding:7px 11px;font-size:10px;max-width:90%;text-align:center;opacity:0;transition:.2s}.toast.show{opacity:1}
+.miniStatus{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 1px;font-size:11px;color:#aebbc9}
+.healthrow{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px}.bar{height:6px;background:#263449;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:var(--good);transition:.2s}.bar.enemy i{background:var(--danger)}
+.controls{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:6px;margin-top:7px;align-items:center}
+.dpad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.dpad button,.action{border:1px solid #2b4059;background:#142131;color:#fff;border-radius:12px;min-height:40px;font-weight:800;font-size:14px}.dpad .empty{visibility:hidden}.fire{background:#64273b;border-color:#8c3650;font-size:15px;min-height:84px}.sideActions{display:grid;gap:5px}.sideActions button{font-size:11px;min-height:39px}
+.event{margin-top:6px;background:#0b141e;border:1px solid #1f3044;border-radius:11px;padding:7px 9px;min-height:36px;color:#b5c1d1;font-size:11px;line-height:1.35}.event strong{color:#ffd068}
+.card{background:#0d1722;border:1px solid #26374d;border-radius:16px;padding:13px;margin:8px 0}.muted{color:#94a5ba;line-height:1.5}.row{display:flex;justify-content:space-between;border-bottom:1px solid #213146;padding:9px 0;font-size:12px}.badge{display:inline-block;background:#2b223e;color:#cfbfff;border-radius:99px;padding:5px 8px;font-size:9px;font-weight:800}
+.overlay{position:absolute;inset:0;background:#05101be8;display:none;place-items:center;text-align:center;padding:24px;z-index:15}.overlay.show{display:grid}.overlay h2{font-size:26px;margin:0 0 8px}.overlay p{color:#b4c1d0}.overlay button{border:0;border-radius:12px;padding:11px 17px;font-weight:900}
+.tutorial{position:fixed;inset:0;background:#050b12e8;z-index:50;display:grid;place-items:center;padding:18px}.tutorial.hidden{display:none}.tutorialCard{max-width:420px;background:#0e1925;border:1px solid #31445d;border-radius:20px;padding:19px}.tutorialCard h2{margin:4px 0 8px}.tutorialCard p{color:#aebbc9;line-height:1.45;font-size:13px}.tutorialCard button{width:100%;min-height:46px;border:0;border-radius:12px;background:#6f50f5;color:white;font-weight:900;font-size:14px}
+@media(max-width:390px){
+ .app{padding-left:6px;padding-right:6px}.hud{gap:4px}.hud>div{padding:5px 3px}.hud b{font-size:12px}
+ .gameShell{padding:5px}.controls{gap:4px}.dpad button,.action{min-height:38px}.fire{min-height:80px}.arena{aspect-ratio:1.2/1}
+}
+</style>
+</head>
+<body>
+<div class="tutorial" id="tutorial">
+  <div class="tutorialCard">
+    <span class="badge">FIRST MATCH</span>
+    <h2>Beat the Rival AI</h2>
+    <p>Move, use nearby buildings/trees for cover, collect loot and fire when the rival is in range. The safe zone keeps shrinking.</p>
+    <p>The rival learns your repeated habits across matches. If it starts countering you, change your strategy.</p>
+    <button id="startBtn">START MATCH</button>
+  </div>
+</div>
+
+<main class="app">
+  <div class="top">
+    <div class="brand"><small>ADAPTIVE BATTLE AI</small><b>ADAPT-X <span style="font-size:11px;color:#bba9ff">V6</span></b></div>
+    <div class="online">● OFFLINE READY</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-page="arenaPage">🎮 ARENA</button>
+    <button class="tab" data-page="brainPage">🧠 AI BRAIN</button>
+    <button class="tab" data-page="historyPage">↻ EVOLUTION</button>
+  </div>
+
+  <section id="arenaPage" class="page active">
+    <div class="hud">
+      <div>❤️ HEALTH<b id="php">100</b></div>
+      <div>🔫 AMMO<b id="ammo">18</b></div>
+      <div>🛡 STATE<b id="state">Open</b></div>
+      <div>⭕ ZONE<b id="zoneTxt">100%</b></div>
+    </div>
+
+    <div class="gameShell">
+      <div class="aiRibbon">
+        <span id="ribbonText">Rival status: <strong>observing you</strong></span>
+        <span class="mode" id="aiMode">MODE: SCOUT</span>
+      </div>
+
+      <div class="arena" id="arena">
+        <div class="texture"></div><div class="road"></div>
+        <div class="building b1"></div><div class="building b2"></div><div class="building b3"></div>
+        <div class="tree t1"></div><div class="tree t2"></div><div class="tree t3"></div>
+        <div class="zone" id="zone"></div><div class="zonePulse" id="zonePulse"></div>
+        <div class="loot" id="ammoLoot">🔫</div><div class="loot" id="medLoot">💉</div>
+        <div class="unit you" id="you"><span>🧍</span><div class="name">YOU</div></div>
+        <div class="unit ai" id="ai"><span>🤖</span><div class="name">RIVAL</div></div>
+        <div class="toast" id="toast"></div><div class="flash" id="flash"></div>
+        <div class="overlay" id="endOverlay"><div><h2 id="result"></h2><p id="endText"></p><button id="nextBtn">NEXT MATCH</button></div></div>
+      </div>
+
+      <div class="miniStatus"><span>YOU</span><span id="matchTxt">MATCH 1</span><span>RIVAL</span></div>
+      <div class="healthrow"><div class="bar"><i id="phb" style="width:100%"></i></div><div class="bar enemy"><i id="ahb" style="width:100%"></i></div></div>
+
+      <div class="controls">
+        <div class="dpad">
+          <button class="empty"></button><button data-dir="up">▲</button><button class="empty"></button>
+          <button data-dir="left">◀</button><button disabled style="opacity:.35">●</button><button data-dir="right">▶</button>
+          <button class="empty"></button><button data-dir="down">▼</button><button class="empty"></button>
+        </div>
+        <button class="action fire" id="fireBtn">🎯<br>FIRE</button>
+        <div class="sideActions">
+          <button class="action" id="coverBtn">🛡 COVER</button>
+          <button class="action" id="lootBtn">🎒 LOOT</button>
+          <button class="action" id="healBtn">💉 HEAL</button>
+        </div>
+      </div>
+
+      <div class="event" id="event">Move naturally. The rival is observing your tactical habits.</div>
+    </div>
+  </section>
+
+  <section id="brainPage" class="page">
+    <div class="card">
+      <span class="badge">AI BRAIN</span>
+      <h3 id="brainTitle">Learning your style</h3>
+      <p class="muted" id="brainText">Play a few actions first. The rival will form a tactical hypothesis from repeated behavior.</p>
+    </div>
+    <div class="card"><h3>Observed tendencies</h3><div id="traits"></div></div>
+    <div class="card"><h3>Current counter logic</h3><p class="muted" id="counterText">No counter active yet.</p><p class="muted" style="font-size:12px">V6 compares your long-term profile with your last 6 meaningful actions, so a real strategy change can be detected without forgetting older matches.</p></div>
+  </section>
+
+  <section id="historyPage" class="page">
+    <div class="card"><h3>Evolution timeline</h3><div id="history" class="muted">No completed matches yet.</div></div>
+  </section>
+</main>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+let match=1,turn=0,php=100,ahp=100,ammo=18,medkits=1,zone=100,covered=false,ended=false;
+let p={x:19,y:78},a={x:79,y:25};
+let habits=JSON.parse(localStorage.getItem('ax6Habits')||'{"rush":0,"cover":0,"loot":0,"retreat":0,"shots":0,"adapt":0}');
+let baseline=localStorage.getItem('ax6Baseline')||'', counterActive=!!baseline;
+let recent=JSON.parse(localStorage.getItem('ax6Recent')||'[]');
+let postBaselineActions=Number(localStorage.getItem('ax6PostBaseline')||0);
+let history=JSON.parse(localStorage.getItem('ax6History')||'[]');
+let ammoTaken=false,medTaken=false,toastTimer;
+
+function dist(){return Math.hypot(p.x-a.x,p.y-a.y)}
+function showToast(t){clearTimeout(toastTimer);$('toast').textContent=t;$('toast').classList.add('show');toastTimer=setTimeout(()=>$('toast').classList.remove('show'),1500)}
+function event(t,hot=false){$('event').innerHTML=hot?'<strong>'+t+'</strong>':t}
+function dominant(){return ['rush','cover','loot','retreat'].sort((x,y)=>habits[y]-habits[x])[0]}
+function totalObs(){return habits.rush+habits.cover+habits.loot+habits.retreat}
+function recentCounts(){
+ const c={rush:0,cover:0,loot:0,retreat:0};
+ recent.forEach(k=>{if(k in c)c[k]++});
+ return c
+}
+function recentDominant(){
+ const c=recentCounts();
+ return ['rush','cover','loot','retreat'].sort((x,y)=>c[y]-c[x])[0]
+}
+function recentShare(k){
+ if(!recent.length)return 0;
+ return recentCounts()[k]/recent.length
+}
+function save(){
+ localStorage.setItem('ax6Habits',JSON.stringify(habits));
+ localStorage.setItem('ax6History',JSON.stringify(history));
+ localStorage.setItem('ax6Recent',JSON.stringify(recent));
+ localStorage.setItem('ax6PostBaseline',String(postBaselineActions));
+ if(baseline)localStorage.setItem('ax6Baseline',baseline)
+}
+
+function coverNear(q){
+ const boxes=[[17,23,23,16],[64,18,24,14],[54,68,28,15]];
+ const centers=boxes.map(([x,y,w,h])=>({x:x+w/2,y:y+h/2}));
+ const trees=[{x:10,y:63},{x:49,y:15},{x:57,y:72}];
+ return [...centers,...trees].some(c=>Math.hypot(q.x-c.x,q.y-c.y)<18)
+}
+function zoneOutside(q){return Math.hypot(q.x-50,q.y-50)>zone*.42}
+function render(){
+ $('you').style.left=p.x+'%';$('you').style.top=p.y+'%';$('ai').style.left=a.x+'%';$('ai').style.top=a.y+'%';
+ $('php').textContent=Math.max(0,php);$('ammo').textContent=ammo;$('state').textContent=covered?'Cover':'Open';$('zoneTxt').textContent=zone+'%';
+ $('phb').style.width=clamp(php,0,100)+'%';$('ahb').style.width=clamp(ahp,0,100)+'%';
+ let z=Math.max(36,zone*.84);for(const id of ['zone','zonePulse']){$(id).style.width=z+'%';$(id).style.height=z+'%';$(id).style.left=(100-z)/2+'%';$(id).style.top=(100-z)/2+'%'}
+ $('matchTxt').textContent='MATCH '+match;$('ammoLoot').style.display=ammoTaken?'none':'grid';$('medLoot').style.display=medTaken?'none':'grid';updateBrain()
+}
+function updateBrain(){
+ let total=totalObs(),d=dominant(),recentD=recentDominant(),conf=total?Math.round(habits[d]/total*100):0;
+ let rc=recentCounts();
+ $('traits').innerHTML=['rush','cover','loot','retreat'].map(k=>`<div class="row"><span>${k.toUpperCase()}</span><b>${habits[k]} <small style="color:#8fa2b8">· recent ${rc[k]}</small></b></div>`).join('');
+ if(total<5){
+   $('brainTitle').textContent='Learning your style';
+   $('brainText').textContent='Not enough evidence yet. The rival is still observing repeated choices.';
+   $('counterText').textContent='No counter active yet.';
+   $('ribbonText').innerHTML='Rival status: <strong>observing you</strong>';
+   $('aiMode').textContent='MODE: SCOUT';
+ } else if(habits.adapt){
+   $('brainTitle').textContent='⚠ Second-order adaptation detected';
+   $('brainText').textContent=`The original pattern was ${baseline}. Your recent actions now look more like ${recentD}. The rival detected that shift and updated its counter-model.`;
+   $('counterText').textContent='Old counter deprecated. Rival is now testing a counter against your newer behavior: '+recentD+'.';
+   $('ribbonText').innerHTML='<strong>SECOND-ORDER AI ACTIVE</strong> · recent shift: '+recentD.toUpperCase();
+   $('aiMode').textContent='MODE: COUNTER-ADAPT';
+ } else {
+   $('brainTitle').textContent='Hypothesis: '+baseline+' tendency';
+   $('brainText').textContent=`Long-term confidence ${conf}%. Recent window: ${recent.length}/6 actions · current recent style: ${recentD}.`;
+   $('counterText').textContent=counterFor(baseline);
+   $('ribbonText').innerHTML='Rival learned: <strong>'+baseline.toUpperCase()+'</strong> · recent: '+recentD.toUpperCase();
+   $('aiMode').textContent='MODE: COUNTER';
+ }
+}
+function counterFor(d){
+ return {rush:'Keep distance, punish forward pressure and fire when you overextend.',
+ cover:'Reposition around cover and increase pressure from a new angle.',
+ loot:'Pressure known pickup routes before you can safely resupply.',
+ retreat:'Close distance faster and deny repeated disengagement.'}[d]||'Observing.'
+}
+function record(kind){
+ habits[kind]++;
+ recent.push(kind);
+ if(recent.length>6)recent.shift();
+ let total=totalObs();
+
+ if(total>=5&&!baseline){
+   baseline=dominant();
+   counterActive=true;
+   postBaselineActions=0;
+   recent=[];
+   showToast('⚠ RIVAL LEARNED: '+baseline.toUpperCase());
+   event('RIVAL ADAPTED — it found a repeated habit.',true);
+ }
+
+ if(counterActive&&baseline){
+   postBaselineActions++;
+   const rd=recentDominant();
+   const baselineRecent=recentShare(baseline);
+   const newRecent=recentShare(rd);
+
+   // Second-order adaptation:
+   // once enough post-counter evidence exists, detect a strong recent
+   // majority that differs from the learned baseline.
+   if(!habits.adapt &&
+      postBaselineActions>=6 &&
+      recent.length>=6 &&
+      rd!==baseline &&
+      newRecent>=0.5 &&
+      baselineRecent<=0.34){
+        habits.adapt=1;
+        showToast('⚠ SECOND-ORDER SHIFT: '+rd.toUpperCase());
+        event('SECOND-ORDER SHIFT — rival detected your recent strategy change.',true);
+   }
+ }
+ save()
+}
+function bullet(from,to){
+ const el=document.createElement('div');el.className='bullet';$('arena').appendChild(el);el.style.left=from.x+'%';el.style.top=from.y+'%';
+ requestAnimationFrame(()=>{el.style.transition='left .17s linear,top .17s linear';el.style.left=to.x+'%';el.style.top=to.y+'%'});
+ setTimeout(()=>el.remove(),220)
+}
+function damageText(q,n){
+ const el=document.createElement('div');el.className='damage';el.textContent='-'+n;el.style.left=q.x+'%';el.style.top=q.y+'%';$('arena').appendChild(el);setTimeout(()=>el.remove(),720)
+}
+function flash(){ $('flash').classList.remove('hit');void $('flash').offsetWidth;$('flash').classList.add('hit') }
+function aiTurn(){
+ if(ended)return;turn++;zone=Math.max(43,100-turn*4);covered=false;
+ const d=dist(),dom=dominant();
+ if(d<34){
+   bullet(a,p);let hitChance=(covered?.27:.62);if(counterActive&&dom==='cover')hitChance+=.08;
+   if(Math.random()<hitChance){
+     let dmg=counterActive&&dom==='rush'?22:14;php-=dmg;flash();damageText(p,dmg);event(`Rival hit you for ${dmg} HP${counterActive?' using a learned counter.':'.'}`)
+   } else event('Rival fired — missed.')
+ } else {
+   let dx=p.x-a.x,dy=p.y-a.y,len=Math.max(1,Math.hypot(dx,dy));let step=counterActive&&dom==='retreat'?10:7;
+   if(counterActive&&dom==='rush'){a.x=clamp(a.x-dx/len*4,7,93);a.y=clamp(a.y-dy/len*4,7,93);event('Rival is creating distance to punish your rush pattern.')}
+   else {a.x=clamp(a.x+dx/len*step,7,93);a.y=clamp(a.y+dy/len*step,7,93);event(counterActive?'Rival is repositioning from your learned pattern.':'Rival is closing distance.')}
+ }
+ if(zoneOutside(p)){php-=7;damageText(p,7);event('You are outside the safe zone!',true)}
+ if(zoneOutside(a)){ahp-=6;damageText(a,6)}
+ check();render()
+}
+function playerMove(dx,dy){
+ if(ended)return;
+ let before=dist();p.x=clamp(p.x+dx*8,6,94);p.y=clamp(p.y+dy*8,6,94);let after=dist();
+ record(after<before?'rush':'retreat');event('You repositioned. Rival turn…');aiTurn()
+}
+document.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('click',()=>{const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];playerMove(...m)}));
+$('fireBtn').onclick=()=>{
+ if(ended)return;if(ammo<=0){showToast('NO AMMO');event('No ammo. Move near the weapon pickup and loot it.',true);return}
+ ammo--;habits.shots++;record('rush');bullet(p,a);
+ let d=dist(),chance=d<27?.78:d<47?.5:.22;if(covered)chance+=.08;
+ if(Math.random()<chance){let dmg=d<27?26:18;ahp-=dmg;damageText(a,dmg);showToast('HIT '+dmg);event('Direct hit on rival.')}else{showToast('MISS');event('Shot missed.')}
+ aiTurn()
+}
+$('coverBtn').onclick=()=>{
+ if(ended)return;
+ if(!coverNear(p)){covered=false;showToast('MOVE NEAR COVER');event('You need to move closer to a building or tree first.',true);return}
+ covered=true;record('cover');showToast('IN COVER');event('You take hard cover. Incoming hit chance is reduced.');aiTurn()
+}
+$('lootBtn').onclick=()=>{
+ if(ended)return;let took=false;
+ if(!ammoTaken&&Math.hypot(p.x-78,p.y-52)<18){ammo+=14;ammoTaken=true;took=true;showToast('+14 AMMO')}
+ if(!medTaken&&Math.hypot(p.x-42,p.y-67)<18){medkits++;medTaken=true;took=true;showToast('+1 MEDKIT')}
+ if(!took){showToast('NO LOOT NEARBY');event('Move closer to a pickup before looting.',true);return}
+ record('loot');event('Loot collected.');aiTurn()
+}
+$('healBtn').onclick=()=>{
+ if(ended)return;
+ if(medkits>0&&php<100){php=Math.min(100,php+34);medkits--;record('cover');showToast('+34 HP');event('You used a medkit.');aiTurn()}
+ else{showToast(medkits?'HP FULL':'NO MEDKIT');event(medkits?'Health is already full.':'No medkits left.',true)}
+}
+function check(){
+ if(php<=0||ahp<=0){
+   ended=true;const win=ahp<=0,d=dominant();
+   history.unshift(`Match ${match}: ${win?'WIN':'LOSS'} · learned style: ${d}${habits.adapt?' · second-order shift':''}`);history=history.slice(0,12);save();
+   $('result').textContent=win?'🏆 YOU WON':'☠ RIVAL WON';
+   $('endText').textContent=habits.adapt?'The rival detected your strategic shift and updated its counter-model.':'Your match behavior has been added to the persistent player model.';
+   $('endOverlay').classList.add('show');renderHistory()
+ }
+}
+$('nextBtn').onclick=()=>{
+ match++;turn=0;php=ahp=100;ammo=18;medkits=1;zone=100;covered=false;ended=false;ammoTaken=medTaken=false;
+ p={x:19,y:78};a={x:79,y:25};$('endOverlay').classList.remove('show');event('New match. The rival remembers your previous tactical history.');render()
+}
+function renderHistory(){$('history').innerHTML=history.length?history.map(x=>`<div class="row"><span>${x}</span></div>`).join(''):'No completed matches yet.'}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ t.classList.add('active');$(t.dataset.page).classList.add('active');renderHistory()
+});
+$('startBtn').onclick=()=>{$('tutorial').classList.add('hidden');localStorage.setItem('ax6Tutorial','1')};
+if(localStorage.getItem('ax6Tutorial'))$('tutorial').classList.add('hidden');
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();renderHistory()
+})();
+</script>
+</body>
+</html>
