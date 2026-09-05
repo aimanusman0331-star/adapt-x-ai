@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b1218">
 <link rel="manifest" href="manifest.webmanifest">
-<title>ADAPT-X V9.1 — Battle Royale Vertical Slice</title>
+<title>ADAPT-X V11 — Battle Royale Feel Pass 1</title>
 <style>
 :root{--panel:#0b1420e8;--line:#2d435a;--text:#f6f8fb;--muted:#9db0c4;--danger:#e84b64;--good:#20c67a;--accent:#e4b65b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -66,21 +66,50 @@ button{font:inherit}
  #fire{width:68px;height:68px;right:12px}.action{transform:scale(.92)}
  #message{left:24%;right:24%}
 }
+
+#mission{position:absolute;left:12px;top:102px;background:#07111bd9;border:1px solid #31465c;border-radius:10px;padding:6px 9px;font-size:9px;color:#d9e3ec}
+#mission b{display:block;color:#fff;font-size:11px}
+#rotateHint{position:absolute;left:50%;top:99px;transform:translateX(-50%);background:#191f27d9;border:1px solid #546273;border-radius:999px;padding:6px 9px;font-size:9px;color:#dce6ef;display:none}
+#engineStatus{position:absolute;left:50%;top:132px;transform:translateX(-50%);background:#0b1420d9;border:1px solid #2d435a;border-radius:999px;padding:5px 8px;font-size:8px;color:#9db0c4;display:none}
+@media (orientation:portrait){#rotateHint{display:block}}
+@media (orientation:landscape){
+ #minimap{width:92px;height:92px;top:92px}
+ #alive{top:188px}
+ #controls{height:118px}
+ #joyBase{width:100px;height:100px}
+ #fire{width:68px;height:68px}
+ #message{bottom:126px}
+ #weaponHud{bottom:130px}
+ #brainBtn{bottom:183px}
+}
+
+
+#compass{position:absolute;left:50%;top:8px;transform:translateX(-50%);min-width:170px;text-align:center;font-weight:900;font-size:10px;letter-spacing:.12em;text-shadow:0 2px 4px #000;pointer-events:none}
+#compass b{font-size:13px;color:#fff;margin:0 6px}#compass span{color:#c8d4df}
+#killFeed{position:absolute;left:12px;top:136px;width:min(235px,48vw);font-size:9px;line-height:1.4;text-shadow:0 2px 4px #000;pointer-events:none}.kill{margin:3px 0;background:#08121ac9;border-left:2px solid #e8b24e;padding:5px 7px;border-radius:4px;animation:kf 4.5s forwards}@keyframes kf{0%,75%{opacity:1}100%{opacity:0}}
+#nearby{position:absolute;left:50%;bottom:205px;transform:translateX(-50%);background:#0a141ee8;border:1px solid #3b536b;border-radius:9px;padding:6px 9px;font-size:9px;display:none;white-space:nowrap}
+#damageFlash{position:absolute;inset:0;background:radial-gradient(circle at center,transparent 35%,rgba(180,0,20,.36) 100%);opacity:0;pointer-events:none;transition:.12s}.damageOn{animation:dmg .3s}@keyframes dmg{50%{opacity:1}}
+#zoneWarn{position:absolute;left:50%;top:91px;transform:translateX(-50%);font-size:10px;font-weight:900;color:#bcd2ff;text-shadow:0 2px 4px #000;opacity:0}.zoneOn{animation:zw 1.5s}@keyframes zw{0%,80%{opacity:1}100%{opacity:0}}
+#dropStatus{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);font-size:13px;font-weight:900;letter-spacing:.12em;text-shadow:0 2px 4px #000;display:none;pointer-events:none}
+@media (orientation:landscape){#compass{top:5px}#killFeed{top:90px}#nearby{bottom:148px}.topbar{max-width:62%}.brand{display:none}#aiBanner{right:115px}}
+
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 
 <div id="hud">
+  <div id="compass"><span>NW</span><b id="heading">N 000°</b><span>NE</span></div>
+  <div id="killFeed"></div><div id="nearby"></div><div id="damageFlash"></div><div id="zoneWarn">BLUE ZONE CLOSING</div><div id="dropStatus">PARACHUTING…</div>
   <div class="topbar">
     <div class="stat">❤️ HP<b id="hp">100</b></div>
     <div class="stat">🦺 ARMOR<b id="armor">0</b></div>
     <div class="stat">⭕ ZONE<b id="zone">100%</b></div>
-    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V9.1</b></div>
+    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V11</b></div>
   </div>
   <div id="aiBanner">Rival AI: <strong>observing your battle behavior</strong></div>
   <div id="minimap"><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
-  <div id="alive">12 ALIVE</div>
+  <div id="alive">12 ALIVE</div><div id="mission">OBJECTIVE<b>Loot · Rotate · Survive</b></div><div id="rotateHint">↻ Landscape gives the full battle view</div><div id="engineStatus">ENGINE LOADING…</div>
   <div id="crosshair"></div><div id="hitmarker"></div>
   <div id="message">Choose a landing area.</div>
   <div id="weaponHud"><small id="weaponName">PISTOL</small><b><span id="mag">12</span>/<span id="reserve">36</span></b></div>
@@ -101,9 +130,9 @@ button{font:inherit}
 
 <div class="overlay" id="dropOverlay">
   <div class="panel">
-    <div class="kicker">ADAPT-X V9.1 · BATTLE ROYALE VERTICAL SLICE</div>
+    <div class="kicker">ADAPT-X V11 · BATTLE ROYALE FEEL PASS 1</div>
     <h2>Choose your drop</h2>
-    <p>This build is designed to feel like a real third-person survival shooter, not an AI dashboard. Your drop, combat range, rotations, ADS use, cover behavior and healing decisions quietly train the Rival AI.</p>
+    <p>Choose a drop zone, then descend into the map. The game will try to enter fullscreen landscape for a proper mobile battle-royale view. One Rival quietly learns how you fight and changes its tactics across matches.</p>
     <div class="landGrid">
       <button class="land" data-land="town">OLD TOWN<small>hot · dense buildings · AR/SMG</small></button>
       <button class="land" data-land="ridge">NORTH RIDGE<small>high ground · sniper loot</small></button>
@@ -152,6 +181,35 @@ window.addEventListener('unhandledrejection', function(e){
   if(box){box.style.display='block';box.textContent='Game startup error: '+(e.reason?.message||e.reason||'Unknown module error');}
 });
 </script>
-<script type="module" src="app.js?v=91"></script>
+
+<script>
+(function(){
+  window.__ADAPTX_BOOTSTRAP__=true;
+  let queuedLanding=null;
+  const msg=(t)=>{const e=document.getElementById('message'); if(e)e.textContent=t};
+  const invoke=(name,...args)=>{
+    const api=window.ADAPT_X_GAME;
+    if(api && typeof api[name]==='function') return api[name](...args);
+    msg('Game engine is loading…');
+    const s=document.getElementById('engineStatus'); if(s)s.style.display='block';
+    return false;
+  };
+  document.querySelectorAll('[data-land]').forEach(btn=>btn.addEventListener('click',()=>{
+    queuedLanding=btn.dataset.land;
+    if(window.ADAPT_X_GAME) invoke('startMatch',queuedLanding);
+    else msg('Preparing drop…');
+  }));
+  const map={fire:'fire',reload:'reload',loot:'loot',heal:'heal',smoke:'smoke',jump:'jump',crouch:'crouch',ads:'toggleADS',brainBtn:'openBrain',closeBrain:'closeBrain',nextMatch:'nextMatch'};
+  Object.entries(map).forEach(([id,fn])=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener(id==='fire'?'pointerdown':'click',()=>invoke(fn));
+  });
+  window.addEventListener('adaptx-ready',()=>{
+    const s=document.getElementById('engineStatus'); if(s)s.style.display='none';
+    if(queuedLanding){const q=queuedLanding;queuedLanding=null;invoke('startMatch',q);}
+  });
+})();
+</script>
+<script type="module" src="app.js?v=11"></script>
 </body>
 </html>
