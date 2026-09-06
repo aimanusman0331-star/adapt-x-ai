@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { clamp, pointCollides, safeSpawn, segmentBlocked, resolveCameraT, emptyProfile, dominant, snapshot, recordBehavior, classifyRange, applyDamage, reloadAmmo, shrinkZone } from './core.mjs?v=11';
+import { clamp, pointCollides, safeSpawn, segmentBlocked, resolveCameraT, emptyProfile, dominant, snapshot, recordBehavior, classifyRange, applyDamage, reloadAmmo, shrinkZone } from './core.mjs?v=12';
 
 const $=id=>document.getElementById(id);
 window.__ADAPTX_BOOTED__=true;
@@ -14,11 +14,11 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.05;
+renderer.toneMappingExposure=1.12;
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0xa8c6d5);
-scene.fog=new THREE.FogExp2(0xa8c6d5,.0065);
+scene.background=new THREE.Color(0x91b4c6);
+scene.fog=new THREE.FogExp2(0x91b4c6,.0048);
 
 const camera=new THREE.PerspectiveCamera(63,innerWidth/innerHeight,.1,400);
 
@@ -33,23 +33,37 @@ for(let i=0;i<pos.count;i++){
   pos.setZ(i,h);
 }
 terrainGeo.computeVertexNormals();
-const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({color:0x557b4e,roughness:1}));
+const terrainColors=[];
+for(let i=0;i<pos.count;i++){
+  const x=pos.getX(i),y=pos.getY(i),h=pos.getZ(i);
+  const n=(Math.sin(x*.17)+Math.cos(y*.13)+2)/4;
+  const c=new THREE.Color().setRGB(.20+n*.07,.39+n*.12,.20+n*.05);
+  if(h>1.5)c.lerp(new THREE.Color(0x75835c),.22);
+  terrainColors.push(c.r,c.g,c.b);
+}
+terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));
+const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
 terrain.rotation.x=-Math.PI/2;terrain.receiveShadow=true;scene.add(terrain);
 
 const obstacles=[];
 function building(x,z,w,d,h,color=0x817260){
  const g=new THREE.Group();
- const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.95}));
+ const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.92}));
  body.position.y=h/2;body.castShadow=body.receiveShadow=true;g.add(body);
- const roof=new THREE.Mesh(new THREE.BoxGeometry(w+1,.55,d+1),new THREE.MeshStandardMaterial({color:0x41494b}));
+ const roof=new THREE.Mesh(new THREE.BoxGeometry(w+1,.55,d+1),new THREE.MeshStandardMaterial({color:0x3e4647,roughness:.9}));
  roof.position.y=h+.3;roof.castShadow=true;g.add(roof);
+ const trimMat=new THREE.MeshStandardMaterial({color:0xd1c2a4,roughness:.8});
+ const glassMat=new THREE.MeshStandardMaterial({color:0x78a5b8,emissive:0x203d48,emissiveIntensity:.45,roughness:.35});
  for(const side of [-1,1]){
-   const win=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2,w*.18),1.5),new THREE.MeshStandardMaterial({color:0x8bc0d4,emissive:0x23444f,emissiveIntensity:.5}));
-   win.position.set(side*w*.27,h*.55,d/2+.011);g.add(win)
+   for(const fx of [-.26,.26]){
+     const win=new THREE.Mesh(new THREE.PlaneGeometry(Math.max(1.3,w*.16),1.35),glassMat.clone());
+     win.position.set(fx*w,h*.58,side*(d/2+.012));if(side<0)win.rotation.y=Math.PI;g.add(win);
+     const ledge=new THREE.Mesh(new THREE.BoxGeometry(Math.max(1.5,w*.18),.12,.25),trimMat);ledge.position.set(fx*w,h*.42,side*(d/2+.14));g.add(ledge)
+   }
  }
- g.position.set(x,0,z);scene.add(g);
- obstacles.push({x,z,hw:w/2+.8,hd:d/2+.8});
- return g
+ const door=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.65),new THREE.MeshStandardMaterial({color:0x392c23,roughness:.9}));door.position.set(0,1.33,d/2+.018);g.add(door);
+ const awning=new THREE.Mesh(new THREE.BoxGeometry(2.4,.16,1.05),new THREE.MeshStandardMaterial({color:0x4f5d54}));awning.position.set(0,3.1,d/2+.48);g.add(awning);
+ g.position.set(x,0,z);scene.add(g);obstacles.push({x,z,hw:w/2+.8,hd:d/2+.8});return g
 }
 [
  [-32,-27,16,11,8],[-12,-31,13,9,7],[12,-28,18,12,9],[35,-22,14,10,8],
@@ -58,13 +72,15 @@ function building(x,z,w,d,h,color=0x817260){
 ].forEach(v=>building(...v));
 
 function tree(x,z,s=1){
- const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.45*s,.75*s,4.5*s,8),new THREE.MeshStandardMaterial({color:0x67472e}));
- trunk.position.set(x,2.2*s,z);trunk.castShadow=true;scene.add(trunk);
- const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(3.2*s,1),new THREE.MeshStandardMaterial({color:0x2d6335,roughness:1}));
- crown.position.set(x,6*s,z);crown.castShadow=true;scene.add(crown);
- obstacles.push({x,z,hw:1.5*s,hd:1.5*s});
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.34*s,.55*s,3.6*s,9),new THREE.MeshStandardMaterial({color:0x5f422c,roughness:1}));
+ trunk.position.set(x,1.8*s,z);trunk.castShadow=true;scene.add(trunk);
+ const crownMat=new THREE.MeshStandardMaterial({color:0x285f36,roughness:1});
+ for(const [ox,oy,oz,sc] of [[0,4.6,0,1],[-1.1,4.2,.25,.72],[1.0,4.1,-.3,.7]]){
+  const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(2.05*s*sc,1),crownMat);crown.position.set(x+ox*s,oy*s,z+oz*s);crown.castShadow=true;scene.add(crown)
+ }
+ obstacles.push({x,z,hw:.9*s,hd:.9*s});
 }
-[[-50,-35],[-48,-15],[-50,20],[-42,43],[-20,48],[3,49],[25,48],[51,43],[52,18],[50,-4],[50,-38],[28,-47],[2,-51],[-23,-50],[-19,17],[5,18],[32,18]].forEach((v,i)=>tree(v[0],v[1],.85+(i%3)*.12));
+[[-50,-35],[-48,-15],[-50,20],[-42,43],[-20,48],[3,49],[25,48],[51,43],[52,18],[50,-4],[50,-38],[28,-47],[2,-51],[-23,-50],[-19,17],[5,18],[32,18]].forEach((v,i)=>tree(v[0],v[1],.78+(i%3)*.08));
 
 
 function rock(x,z,s=1){
@@ -84,8 +100,22 @@ function crate(x,z){
 [[-46,-24],[-22,-20],[-2,-20],[22,-17],[45,-15],[-42,14],[-20,20],[2,23],[27,21],[46,27],[-17,-43],[18,-44]].forEach(v=>bush(v[0],v[1],1));
 [[-22,-34],[-4,-34],[24,-31],[32,-14],[-20,9],[8,13],[31,10],[-35,35],[8,36],[35,35]].forEach(v=>crate(v[0],v[1]));
 
-const roadMat=new THREE.MeshStandardMaterial({color:0x77736b,roughness:1});
+function lowWall(x,z,w,rot=0){const m=new THREE.Mesh(new THREE.BoxGeometry(w,1.15,.45),new THREE.MeshStandardMaterial({color:0x9a927d,roughness:1}));m.position.set(x,.58,z);m.rotation.y=rot;m.castShadow=true;scene.add(m);const c=Math.abs(Math.cos(rot)),sn=Math.abs(Math.sin(rot));obstacles.push({x,z,hw:(w*c+.45*sn)/2,hd:(w*sn+.45*c)/2})}
+[[-24,-17,12,0],[-7,-18,8,0],[22,-13,10,.1],[-28,16,12,0],[-5,17,9,0],[27,17,11,0],[-18,45,13,0]].forEach(v=>lowWall(...v));
+function vehicle(x,z,rot=0,color=0x42566a){const g=new THREE.Group();const body=new THREE.Mesh(new THREE.BoxGeometry(3.6,1,1.75),new THREE.MeshStandardMaterial({color,metalness:.25,roughness:.65}));body.position.y=1;body.castShadow=true;g.add(body);const cab=new THREE.Mesh(new THREE.BoxGeometry(1.8,.9,1.55),new THREE.MeshStandardMaterial({color:0x293a49,metalness:.15,roughness:.5}));cab.position.set(.25,1.75,0);g.add(cab);for(const sx of [-1.15,1.15])for(const sz of [-.9,.9]){const wh=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.28,12),new THREE.MeshStandardMaterial({color:0x17191b}));wh.rotation.x=Math.PI/2;wh.position.set(sx,.52,sz);g.add(wh)}g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);obstacles.push({x,z,hw:2.3,hd:1.4})}
+vehicle(-7,-8,.25,0x505e43);vehicle(28,11,-.3,0x59606a);vehicle(-31,25,.18,0x6a4d3d);
+
+// lightweight grass tufts: density without heavy textures
+const grassGeo=new THREE.ConeGeometry(.11,.65,3),grassMat=new THREE.MeshStandardMaterial({color:0x315f32,roughness:1,side:THREE.DoubleSide});
+const grass=new THREE.InstancedMesh(grassGeo,grassMat,420);const gm=new THREE.Matrix4();let gi=0;
+for(let i=0;i<900&&gi<420;i++){const x=(Math.random()-.5)*125,z=(Math.random()-.5)*125;if(pointCollides(x,z,obstacles,1.2))continue;gm.makeRotationY(Math.random()*Math.PI);gm.setPosition(x,.28,z);grass.setMatrixAt(gi++,gm)}
+grass.count=gi;scene.add(grass);
+
+
+const roadMat=new THREE.MeshStandardMaterial({color:0x696b68,roughness:1});
 const road=new THREE.Mesh(new THREE.PlaneGeometry(170,9),roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=.28;road.position.y=.08;scene.add(road);
+for(const off of [-2.7,2.7]){const mark=new THREE.Mesh(new THREE.PlaneGeometry(170,.12),new THREE.MeshBasicMaterial({color:0xd6d0b0,transparent:true,opacity:.65}));mark.rotation.x=-Math.PI/2;mark.rotation.z=.28;mark.position.set(-Math.sin(.28)*off,.091,Math.cos(.28)*off);scene.add(mark)}
+
 const river=new THREE.Mesh(new THREE.PlaneGeometry(170,12),new THREE.MeshPhysicalMaterial({color:0x478ba4,roughness:.3,transparent:true,opacity:.78}));
 river.rotation.x=-Math.PI/2;river.rotation.z=-.18;river.position.y=.1;scene.add(river);
 
@@ -155,16 +185,27 @@ function replaceActor(root,color,isPlayer){
  root.clear();
  const m=SkeletonUtilsNS.clone(soldierTemplate);m.scale.setScalar(1.05);m.rotation.y=Math.PI;
  m.traverse(o=>{if(o.isMesh&&o.material){o.material=o.material.clone();if(color){o.material.color?.multiply(new THREE.Color(color))}}});
- root.add(m);root.userData.visual=m;
+ root.add(m);root.userData.visual=m;attachRifle(root,isPlayer?0x25282c:0x31343a);
  const mixer=new THREE.AnimationMixer(m);root.userData.mixer=mixer;
  const run=soldierClips.find(c=>/run/i.test(c.name))||soldierClips[1]||soldierClips[0];
  if(run){root.userData.action=mixer.clipAction(run);root.userData.action.play();root.userData.action.paused=true}
 }
 
+
+function attachRifle(root,color=0x25282c){
+ const old=root.getObjectByName('heldWeapon');if(old)root.remove(old);
+ const gun=new THREE.Group();gun.name='heldWeapon';
+ const receiver=new THREE.Mesh(new THREE.BoxGeometry(.16,.2,1.45),new THREE.MeshStandardMaterial({color,metalness:.35,roughness:.52}));gun.add(receiver);
+ const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.035,.045,.92,8),new THREE.MeshStandardMaterial({color:0x17191c,metalness:.55,roughness:.35}));barrel.rotation.x=Math.PI/2;barrel.position.z=-1.12;gun.add(barrel);
+ const mag=new THREE.Mesh(new THREE.BoxGeometry(.12,.38,.22),new THREE.MeshStandardMaterial({color:0x202327}));mag.position.set(0,-.24,-.15);mag.rotation.x=.18;gun.add(mag);
+ const stock=new THREE.Mesh(new THREE.BoxGeometry(.13,.18,.55),new THREE.MeshStandardMaterial({color:0x39352f}));stock.position.z=.92;gun.add(stock);
+ gun.position.set(.48,1.72,-.55);gun.rotation.set(-.08,.03,-.18);root.add(gun);return gun
+}
 const playerActor=makeActor(0x576fe8);
 const rivalActor=makeActor(0xd64758);
 const enemyActors=[rivalActor,makeActor(0x6c6f73),makeActor(0x676d64),makeActor(0x606b72)];
 const enemyData=enemyActors.map((actor,i)=>({actor,hp:i===0?120:75,armor:i===0?35:15,alive:true,rival:i===0,cooldown:1+Math.random(),wander:new THREE.Vector3()}));
+attachRifle(playerActor);enemyActors.forEach((a,i)=>attachRifle(a,i===0?0x44232a:0x292c2f));
 
 const rivalBeacon=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,1.8,8),new THREE.MeshBasicMaterial({color:0xff4b66}));
 scene.add(rivalBeacon);
@@ -200,11 +241,11 @@ let s={
  alive:12,zoneElapsed:0,matchElapsed:0,lastShotDistance:0,reloading:false,zoneDamageTimer:0,graceUntil:0,dropping:false,dropElapsed:0,dropDuration:2.8,dropTarget:null
 };
 
-let profile=JSON.parse(localStorage.getItem('ax11Profile')||JSON.stringify(emptyProfile()));
-let baseline=JSON.parse(localStorage.getItem('ax11Baseline')||'null');
-let recent=JSON.parse(localStorage.getItem('ax11Recent')||'[]');
+let profile=JSON.parse(localStorage.getItem('ax12Profile')||JSON.stringify(emptyProfile()));
+let baseline=JSON.parse(localStorage.getItem('ax12Baseline')||'null');
+let recent=JSON.parse(localStorage.getItem('ax12Recent')||'[]');
 
-function saveAI(){localStorage.setItem('ax11Profile',JSON.stringify(profile));localStorage.setItem('ax11Baseline',JSON.stringify(baseline));localStorage.setItem('ax11Recent',JSON.stringify(recent))}
+function saveAI(){localStorage.setItem('ax12Profile',JSON.stringify(profile));localStorage.setItem('ax12Baseline',JSON.stringify(baseline));localStorage.setItem('ax12Recent',JSON.stringify(recent))}
 function snap(){return snapshot(profile)}
 function record(t){
   const r=recordBehavior(profile,baseline,recent,t);
@@ -214,9 +255,9 @@ function record(t){
   saveAI();updateAIUI()
 }
 function updateAIUI(){
- if(!baseline){$('aiBanner').innerHTML='Rival AI: <strong>observing your battle behavior</strong>'}
- else if(profile.secondOrder){$('aiBanner').innerHTML='<strong>SECOND-ORDER AI ACTIVE</strong> · your recent strategy changed'}
- else{$('aiBanner').innerHTML=`Rival learned: <strong>${baseline.range.toUpperCase()} RANGE · ${baseline.rotation.toUpperCase()} ROTATE · ${baseline.aggression.toUpperCase()}</strong>`}
+ if(!baseline){$('aiBanner').innerHTML='Adaptive Rival · <strong>observing</strong>'}
+ else if(profile.secondOrder){$('aiBanner').innerHTML='<strong>RIVAL ADAPTED</strong> · strategy shift detected'}
+ else{$('aiBanner').innerHTML=`Adaptive Rival · <strong>${baseline.range.toUpperCase()} · ${baseline.rotation.toUpperCase()} · ${baseline.aggression.toUpperCase()}</strong>`}
  const cur=snap();
  $('brainRows').innerHTML=[
   ['Combat range',cur.range],['Rotation timing',cur.rotation],['Aggression',cur.aggression],['ADS use',cur.ads],
@@ -246,7 +287,7 @@ function counterPlan(){
 
 let yaw=0,pitch=-.18,joyX=0,joyY=0,lookId=null,lookLast={x:0,y:0};
 async function enterImmersive(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.({navigationUI:'hide'})}catch{}try{await screen.orientation?.lock?.('landscape')}catch{}ensureAudio()}
-function finishLanding(landKey){const target=s.dropTarget;playerActor.position.set(target.x,0,target.z);parachute.visible=false;s.dropping=false;s.landed=true;s.ended=false;s.alive=12;s.graceUntil=performance.now()+3500;const tags={town:'hot',ridge:'high',farm:'safe',harbor:'medium'};record('land:'+tags[landKey]);const baseSpawns=[{x:45,z:-10},{x:-48,z:13},{x:13,z:48},{x:-5,z:-10}];enemyData.forEach((e,i)=>{const sp=safeSpawn(baseSpawns[i],obstacles,2);e.actor.visible=true;e.hp=e.rival?120:75;e.armor=e.rival?35:15;e.alive=true;e.actor.position.set(sp.x,0,sp.z);e.cooldown=1.2+i*.35});$('dropStatus').style.display='none';msg('Landed. 3-second safe window — loot, orient and move.');feed('You entered the combat zone');hud()}
+function finishLanding(landKey){const target=s.dropTarget;playerActor.position.set(target.x,0,target.z);parachute.visible=false;s.dropping=false;s.landed=true;s.ended=false;s.alive=12;s.graceUntil=performance.now()+3500;const tags={town:'hot',ridge:'high',farm:'safe',harbor:'medium'};record('land:'+tags[landKey]);const baseSpawns=[{x:18,z:-20},{x:-42,z:10},{x:8,z:39},{x:35,z:26}];enemyData.forEach((e,i)=>{const sp=safeSpawn(baseSpawns[i],obstacles,2);e.actor.visible=true;e.hp=e.rival?120:75;e.armor=e.rival?35:15;e.alive=true;e.actor.position.set(sp.x,0,sp.z);e.cooldown=1.2+i*.35});$('dropStatus').style.display='none';msg('Landed. 3-second safe window — loot, orient and move.');feed('You entered the combat zone');hud()}
 function beginDrop(landKey){enterImmersive();const raw=LAND[landKey]||LAND.farm;const safe=safeSpawn({x:raw.x,z:raw.z},obstacles,2);s.dropTarget={x:safe.x,z:safe.z,landKey};s.dropping=true;s.landed=false;s.dropElapsed=0;playerActor.position.set(safe.x+5,22,safe.z+5);parachute.visible=true;parachute.position.copy(playerActor.position);$('dropOverlay').classList.add('hidden');$('dropStatus').style.display='block';msg('Parachuting into '+landKey.toUpperCase()+'…')}
 function updateDrop(dt){if(!s.dropping)return;s.dropElapsed+=dt;const p=clamp(s.dropElapsed/s.dropDuration,0,1),ease=1-Math.pow(1-p,2);const t=s.dropTarget;playerActor.position.x=lerp(t.x+5,t.x,ease);playerActor.position.z=lerp(t.z+5,t.z,ease);playerActor.position.y=lerp(22,.2,ease);parachute.position.copy(playerActor.position);parachute.position.y+=.3;playerActor.rotation.y=yaw;if(p>=1)finishLanding(t.landKey)}
 
@@ -272,21 +313,17 @@ function setActorOpacity(root,opacity){
  root.traverse(o=>{if(o.isMesh&&o.material){o.material.transparent=opacity<1;o.material.opacity=opacity}})
 }
 function shoulderCamera(){
- if(s.dropping){const desired=playerActor.position.clone().add(new THREE.Vector3(10,9,13));camera.position.lerp(desired,.16);camera.lookAt(playerActor.position.clone().add(new THREE.Vector3(0,-2,0)));camera.fov=lerp(camera.fov,72,.12);camera.updateProjectionMatrix();setActorOpacity(playerActor,1);return}
- const shoulder=s.ads?.48:1.55,dist=s.ads?3.7:7.8,height=s.crouched?2.45:3.25;
+ if(s.dropping){const desired=playerActor.position.clone().add(new THREE.Vector3(8,7.5,10));camera.position.lerp(desired,.18);camera.lookAt(playerActor.position.clone().add(new THREE.Vector3(0,-1.5,0)));camera.fov=lerp(camera.fov,66,.14);camera.updateProjectionMatrix();setActorOpacity(playerActor,1);return}
+ const shoulder=s.ads?.36:.92,dist=s.ads?2.45:5.15,height=s.crouched?2.15:2.72;
  const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
- const start=playerActor.position.clone().add(new THREE.Vector3(0,s.crouched?1.6:2.0,0));
- const target=start.clone().add(fwd.clone().multiplyScalar(s.ads?8:5.6));
- target.y+=Math.sin(pitch)*(s.ads?4.1:3.4);
+ const start=playerActor.position.clone().add(new THREE.Vector3(0,s.crouched?1.42:1.72,0));
+ const target=start.clone().add(fwd.clone().multiplyScalar(s.ads?12:7.2));target.y+=Math.sin(pitch)*(s.ads?4.0:3.1);
  const raw=start.clone().add(new THREE.Vector3(0,height-start.y,0)).add(fwd.clone().multiplyScalar(-dist)).add(right.multiplyScalar(shoulder));
  const t=resolveCameraT(start.x,start.z,raw.x,raw.z,obstacles);
- const desired=start.clone().lerp(raw,t);
- desired.y=Math.max(1.9, start.y+(raw.y-start.y)*Math.max(.45,t));
- desired.y+=recoilKick;camera.position.lerp(desired,.24);recoilKick*=.72;
- camera.lookAt(target);
- camera.fov=lerp(camera.fov,s.ads?42:64,.2);camera.updateProjectionMatrix();
- setActorOpacity(playerActor,t<.46?.38:1);
+ const safeT=Math.max(.2,t-.025);const desired=start.clone().lerp(raw,safeT);desired.y=Math.max(1.75,start.y+(raw.y-start.y)*Math.max(.55,safeT));
+ desired.y+=recoilKick;camera.position.lerp(desired,.3);recoilKick*=.72;camera.lookAt(target);camera.fov=lerp(camera.fov,s.ads?38:55,.22);camera.updateProjectionMatrix();
+ setActorOpacity(playerActor,safeT<.32?.22:1);
 }
 function distanceToNearestEnemy(){
  let d=999;enemyData.forEach(e=>{if(e.alive)d=Math.min(d,e.actor.position.distanceTo(playerActor.position))});return d
@@ -448,7 +485,7 @@ window.ADAPT_X_GAME={
  openBrain:()=>{$('brainOverlay').classList.remove('hidden');updateAIUI()},
  closeBrain:()=>$('brainOverlay').classList.add('hidden'),
  nextMatch:resetMatch,
- __qa:()=>({booted:window.__ADAPTX_BOOTED__,landed:s.landed,dropping:s.dropping,hp:s.hp,armor:s.armor,zone:s.zone,profile:structuredClone(profile),baseline:baseline?{...baseline}:null})
+ __qa:()=>({booted:window.__ADAPTX_BOOTED__,landed:s.landed,dropping:s.dropping,hp:s.hp,armor:s.armor,zone:s.zone,profile:structuredClone(profile),baseline:baseline?{...baseline}:null,camera:{fov:camera.fov},viewport:{w:innerWidth,h:innerHeight}})
 };
 window.dispatchEvent(new Event('adaptx-ready'));
 tryLoadHighDetailSoldier();
