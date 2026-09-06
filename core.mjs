@@ -47,6 +47,7 @@ export function emptyProfile(){
     ads:{yes:0,no:0},
     heal:{early:0,late:0},
     crouch:{yes:0,no:0},
+    lootRisk:{safe:0,pressure:0},
     observations:0,
     secondOrder:0
   };
@@ -79,6 +80,8 @@ export function recordBehavior(profile,baseline,recent,tag){
   if(tag==='heal:late') profile.heal.late++;
   if(tag==='crouch:yes') profile.crouch.yes++;
   if(tag==='crouch:no') profile.crouch.no++;
+  if(tag==='loot:safe') profile.lootRisk.safe++;
+  if(tag==='loot:pressure') profile.lootRisk.pressure++;
 
   let built=false, shifted=false;
   if(!baseline && profile.observations>=16){
@@ -123,4 +126,31 @@ export function reloadAmmo(mag,reserve,capacity){
 
 export function shrinkZone(radius,minRadius=19,step=7){
   return Math.max(minRadius,radius-step);
+}
+
+
+export function chooseCoverPoint(actor,target,obstacles,maxDistance=18){
+  let best=null,bestScore=Infinity;
+  for(const o of obstacles){
+    const corners=[
+      {x:o.x-o.hw-1.1,z:o.z-o.hd-1.1},{x:o.x+o.hw+1.1,z:o.z-o.hd-1.1},
+      {x:o.x-o.hw-1.1,z:o.z+o.hd+1.1},{x:o.x+o.hw+1.1,z:o.z+o.hd+1.1}
+    ];
+    for(const c of corners){
+      const da=Math.hypot(c.x-actor.x,c.z-actor.z);if(da>maxDistance)continue;
+      if(pointCollides(c.x,c.z,obstacles,.35))continue;
+      // useful cover means the obstacle blocks line from candidate to target
+      if(!segmentBlocked(c.x,c.z,target.x,target.z,[o],.1))continue;
+      const score=da+Math.hypot(c.x-target.x,c.z-target.z)*.06;
+      if(score<bestScore){best=c;bestScore=score}
+    }
+  }
+  return best;
+}
+
+export function equipmentDamage(raw,armor,helmet=0,headshot=false){
+  const helmetBlock=headshot?Math.min(raw*.42,helmet*.32):0;
+  const afterHelmet=raw-helmetBlock;
+  const armorBlock=Math.min(armor,afterHelmet*.42);
+  return {dealt:afterHelmet-armorBlock,armorUsed:armorBlock,helmetUsed:helmetBlock};
 }
