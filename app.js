@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { clamp, pointCollides, safeSpawn, segmentBlocked, resolveCameraT, emptyProfile, dominant, snapshot, recordBehavior, classifyRange, applyDamage, reloadAmmo, shrinkZone, chooseCoverPoint, equipmentDamage } from './core.mjs?v=13';
+import { clamp, pointCollides, safeSpawn, segmentBlocked, resolveCameraT, emptyProfile, dominant, snapshot, recordBehavior, classifyRange, applyDamage, reloadAmmo, shrinkZone, chooseCoverPoint, equipmentDamage, equipWeaponState, swapWeaponState, applyPickupState, useMedkitState, consumeSmokeState } from './core.mjs?v=14';
 
 const $=id=>document.getElementById(id);
 window.__ADAPTX_BOOTED__=true;
@@ -331,16 +331,22 @@ function setActorOpacity(root,opacity){
 }
 function shoulderCamera(){
  if(s.dropping){const desired=playerActor.position.clone().add(new THREE.Vector3(8,7.5,10));camera.position.lerp(desired,.18);camera.lookAt(playerActor.position.clone().add(new THREE.Vector3(0,-1.5,0)));camera.fov=lerp(camera.fov,66,.14);camera.updateProjectionMatrix();setActorOpacity(playerActor,1);return}
- const shoulder=s.ads?.36:.92,dist=s.ads?2.45:5.15,height=s.crouched?2.15:2.72;
+ const aspect=Math.max(.42,innerWidth/Math.max(1,innerHeight));
+ const portrait=aspect<.8;
+ const shoulder=s.ads?(portrait?.26:.36):(portrait?.62:.92);
+ const dist=s.ads?(portrait?3.25:2.45):(portrait?6.7:5.15);
+ const height=s.crouched?(portrait?2.48:2.15):(portrait?3.1:2.72);
  const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
  const start=playerActor.position.clone().add(new THREE.Vector3(0,s.crouched?1.42:1.72,0));
- const target=start.clone().add(fwd.clone().multiplyScalar(s.ads?12:7.2));target.y+=Math.sin(pitch)*(s.ads?4.0:3.1);
- const raw=start.clone().add(new THREE.Vector3(0,height-start.y,0)).add(fwd.clone().multiplyScalar(-dist)).add(right.multiplyScalar(shoulder));
- const t=resolveCameraT(start.x,start.z,raw.x,raw.z,obstacles);
- const safeT=Math.max(.2,t-.025);const desired=start.clone().lerp(raw,safeT);desired.y=Math.max(1.75,start.y+(raw.y-start.y)*Math.max(.55,safeT));
- desired.y+=recoilKick;camera.position.lerp(desired,.3);recoilKick*=.72;camera.lookAt(target);camera.fov=lerp(camera.fov,s.ads?38:55,.22);camera.updateProjectionMatrix();
- setActorOpacity(playerActor,safeT<.32?.22:1);
+ const target=start.clone().add(fwd.clone().multiplyScalar(s.ads?13:(portrait?9.4:7.2)));target.y+=Math.sin(pitch)*(s.ads?4.0:(portrait?3.8:3.1));
+ const makeRaw=(side,extraY=0,scale=1)=>start.clone().add(new THREE.Vector3(0,height-start.y+extraY,0)).add(fwd.clone().multiplyScalar(-dist*scale)).add(right.clone().multiplyScalar(side));
+ const rawA=makeRaw(shoulder),rawB=makeRaw(-shoulder),rawHigh=makeRaw(0,portrait?1.05:.72,.74);
+ const tA=resolveCameraT(start.x,start.z,rawA.x,rawA.z,obstacles),tB=resolveCameraT(start.x,start.z,rawB.x,rawB.z,obstacles),tH=resolveCameraT(start.x,start.z,rawHigh.x,rawHigh.z,obstacles);
+ let raw=rawA,t=tA;if(tB>t+.12){raw=rawB;t=tB}if(t<.44&&tH>t){raw=rawHigh;t=tH}
+ const safeT=Math.max(.24,t-.025);const desired=start.clone().lerp(raw,safeT);desired.y=Math.max(portrait?2.05:1.75,start.y+(raw.y-start.y)*Math.max(.58,safeT));
+ desired.y+=recoilKick;camera.position.lerp(desired,portrait?.24:.3);recoilKick*=.72;camera.lookAt(target);camera.fov=lerp(camera.fov,s.ads?(portrait?44:38):(portrait?64:55),.22);camera.updateProjectionMatrix();
+ setActorOpacity(playerActor,safeT<.29?.28:1);
 }
 function distanceToNearestEnemy(){
  let d=999;enemyData.forEach(e=>{if(e.alive)d=Math.min(d,e.actor.position.distanceTo(playerActor.position))});return d
@@ -395,13 +401,7 @@ function currentWeapon(){
  if(s.weapon==='AR')return LOOT_TYPES.AR;if(s.weapon==='SMG')return LOOT_TYPES.SMG;if(s.weapon==='DMR')return LOOT_TYPES.SNIPER;
  return {mag:12}
 }
-function equipWeapon(def){
- const current={weapon:s.weapon,mag:s.mag,reserve:s.reserve,damage:s.damage,range:s.range,acc:s.acc};
- if(s.weapon==='PISTOL' && !s.secondary){s.secondary=current}
- else if(!s.secondary){s.secondary=current}
- else{s.secondary=current}
- s.weapon=def.label;s.mag=def.mag;s.reserve=def.reserve;s.damage=def.damage;s.range=def.range;s.acc=def.acc;
-}
+function equipWeapon(def){Object.assign(s,equipWeaponState(s,def))}
 function lootNearby(){
  if(!s.landed||s.ended)return;
  const near=loot.filter(l=>!l.userData.taken).sort((a,b)=>a.position.distanceTo(playerActor.position)-b.position.distanceTo(playerActor.position))[0];
@@ -409,29 +409,18 @@ function lootNearby(){
  near.userData.taken=true;near.visible=false;const t=near.userData.type,d=LOOT_TYPES[t];
  record('loot:'+(Math.hypot(playerActor.position.x,playerActor.position.z)>s.zoneRadius*.86?'pressure':'safe'));
  if(d.weapon){equipWeapon(d);toast('Picked up '+d.label+' · previous weapon moved to slot 2')}
- else if(t==='ARMOR'){s.armor=Math.min(100,s.armor+55);toast('Tactical vest equipped')}
- else if(t==='HELMET'){s.helmetLevel=Math.min(3,s.helmetLevel+1);s.helmet=Math.min(100,s.helmet+45);toast('Helmet Lv'+s.helmetLevel+' equipped')}
- else if(t==='BACKPACK'){s.backpackLevel=Math.min(3,s.backpackLevel+1);toast('Backpack Lv'+s.backpackLevel+' equipped')}
- else if(t==='MED'){s.meds=Math.min(1+s.backpackLevel*2+3,s.meds+1);toast('+1 Medkit')}
- else if(t==='SMOKE'){s.smokes=Math.min(2+s.backpackLevel*2,s.smokes+1);toast('+1 Smoke')}
+ else{Object.assign(s,applyPickupState(s,t,d));if(t==='ARMOR')toast('Tactical vest equipped');else if(t==='HELMET')toast('Helmet Lv'+s.helmetLevel+' equipped');else if(t==='BACKPACK')toast('Backpack Lv'+s.backpackLevel+' equipped');else if(t==='MED')toast('+1 Medkit');else if(t==='SMOKE')toast('+1 Smoke')}
  hud();updateInventory()
 }
-function swapWeapon(){
- if(!s.secondary){msg('No secondary weapon yet.');return false}
- const cur={weapon:s.weapon,mag:s.mag,reserve:s.reserve,damage:s.damage,range:s.range,acc:s.acc};
- const next=s.secondary;s.secondary=cur;Object.assign(s,next);msg('Swapped to '+s.weapon);hud();updateInventory();return true
-}
+function swapWeapon(){const r=swapWeaponState(s);if(!r.swapped){msg('No secondary weapon yet.');return false}Object.assign(s,r.state);msg('Swapped to '+s.weapon);hud();updateInventory();return true}
 function updateInventory(){
  $('invHelmet').textContent=s.helmetLevel?'Lv'+s.helmetLevel:'Lv0';$('invVest').textContent=Math.round(s.armor)+'%';$('invBag').textContent='Lv'+s.backpackLevel;
  $('slotPrimary').textContent=s.weapon;$('ammoPrimary').textContent=s.mag+' / '+s.reserve;
  $('slotSecondary').textContent=s.secondary?.weapon||'EMPTY';$('ammoSecondary').textContent=s.secondary?(s.secondary.mag+' / '+s.secondary.reserve):'—';
  $('invMeds').textContent=s.meds+' Medkit'+(s.meds===1?'':'s');$('invSmokes').textContent=s.smokes+' Smoke'+(s.smokes===1?'':'s');
 }
-function heal(){
- if(s.meds<=0){msg('No medkits.');return}if(s.hp>=95){msg('Health already full.');return}
- record(s.hp>50?'heal:early':'heal:late');s.meds--;s.hp=Math.min(100,s.hp+42);msg('Medkit used.');hud()
-}
-function smoke(){if(s.smokes<=0){msg('No smoke grenade.');return}s.smokes--;record('hold');msg('Smoke deployed. Rival accuracy reduced.');s.smokedUntil=performance.now()+4500;hud()}
+function heal(){const r=useMedkitState(s.hp,s.meds);if(!r.used){msg(s.meds<=0?'No medkits.':'Health already full.');return}record(s.hp>50?'heal:early':'heal:late');s.hp=r.hp;s.meds=r.meds;msg('Medkit used.');hud()}
+function smoke(){const r=consumeSmokeState(s.smokes);if(!r.used){msg('No smoke grenade.');return}s.smokes=r.smokes;record('hold');msg('Smoke deployed. Rival accuracy reduced.');s.smokedUntil=performance.now()+4500;hud()}
 function jump(){if(!s.landed||s.crouched)return;playerActor.position.y=.8;setTimeout(()=>playerActor.position.y=0,280)}
 function crouch(){s.crouched=!s.crouched;record(s.crouched?'crouch:yes':'crouch:no');$('crouch').textContent=s.crouched?'STAND':'CROUCH'}
 
@@ -531,8 +520,9 @@ window.ADAPT_X_GAME={
  closeInventory:()=>$('inventoryOverlay').classList.add('hidden'),
  swapWeapon,
  closeBrain:()=>$('brainOverlay').classList.add('hidden'),
+ resetAI:()=>{profile=emptyProfile();baseline=null;recent=[];localStorage.removeItem('ax12Profile');localStorage.removeItem('ax12Baseline');localStorage.removeItem('ax12Recent');updateAIUI();msg('Adaptive Rival profile reset.');return true},
  nextMatch:resetMatch,
- __qa:()=>({booted:window.__ADAPTX_BOOTED__,landed:s.landed,dropping:s.dropping,hp:s.hp,armor:s.armor,zone:s.zone,profile:structuredClone(profile),baseline:baseline?{...baseline}:null,equipment:{helmet:s.helmetLevel,backpack:s.backpackLevel,secondary:s.secondary?.weapon||null},camera:{fov:camera.fov},viewport:{w:innerWidth,h:innerHeight}})
+ __qa:()=>({booted:window.__ADAPTX_BOOTED__,landed:s.landed,dropping:s.dropping,hp:s.hp,armor:s.armor,zone:s.zone,profile:structuredClone(profile),baseline:baseline?{...baseline}:null,equipment:{helmet:s.helmetLevel,backpack:s.backpackLevel,secondary:s.secondary?.weapon||null},camera:{fov:camera.fov,aspect:camera.aspect,portrait:innerHeight>=innerWidth},viewport:{w:innerWidth,h:innerHeight},loadout:{weapon:s.weapon,secondary:s.secondary?.weapon||null,meds:s.meds,smokes:s.smokes}})
 };
 window.dispatchEvent(new Event('adaptx-ready'));
 tryLoadHighDetailSoldier();
