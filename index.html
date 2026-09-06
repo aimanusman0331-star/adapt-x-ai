@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b1218">
 <link rel="manifest" href="manifest.webmanifest">
-<title>ADAPT-X V13 — Survival Systems</title>
+<title>ADAPT-X V14 — Responsive Combat Pass</title>
 <style>
 :root{--panel:#0b1420e8;--line:#2d435a;--text:#f6f8fb;--muted:#9db0c4;--danger:#e84b64;--good:#20c67a;--accent:#e4b65b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -138,6 +138,72 @@ body.portrait-bypass #portraitGate{display:none!important}
 @media(orientation:landscape){#gearHud{left:8px;top:79px}#bagBtn{right:120px;bottom:37px;padding:5px 7px}#swapBtn{right:120px;bottom:9px;padding:5px 7px}#tacticChip{top:33px}}
 @media(max-width:430px) and (orientation:portrait){#gearHud{top:93px}#bagBtn{right:12px;bottom:250px}#swapBtn{right:12px;bottom:216px}}
 
+
+
+/* V14 RESPONSIVE COMBAT PASS */
+:root{--edge:max(8px,env(safe-area-inset-left));--bottom-safe:max(8px,env(safe-area-inset-bottom))}
+#aiBanner{width:auto;max-width:min(560px,62vw);left:50%;right:auto;transform:translateX(-50%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rotateHint{pointer-events:none}
+body.game-active #rotateHint{display:none!important}
+#brainBtn,#bagBtn,#swapBtn,.action{box-shadow:0 4px 14px #0004}
+.secondaryBtn{width:100%;border:1px solid #485d72;border-radius:13px;padding:11px;background:#101b27;color:#d9e5f0;font-weight:800;margin-top:8px}.brainActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.brainActions .secondaryBtn{margin-top:0}
+
+@media(orientation:landscape){
+ .topbar{left:10px;top:8px;gap:4px}.stat{min-width:58px;padding:5px 7px}
+ #mission{left:10px;top:57px;padding:4px 7px;font-size:7px}#mission b{font-size:9px}
+ #gearHud{left:10px;top:94px}.gearChip{padding:3px 5px;font-size:7px}.gearChip b{font-size:8px}
+ #aiBanner{top:39px;max-width:38vw;padding:5px 9px;font-size:8px;border-radius:9px}
+ #tacticChip{top:68px;font-size:7px;max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #minimap{right:10px;top:10px;width:86px;height:86px;border-radius:16px}#alive{right:18px;top:100px}
+ #brainBtn{right:104px;top:10px;bottom:auto;padding:5px 7px;font-size:9px}
+ #weaponHud{right:12px;bottom:92px;padding:5px 8px;border-radius:9px}#weaponHud b{font-size:15px}
+ #bagBtn{right:291px;bottom:60px;padding:5px 7px;font-size:8px}#swapBtn{right:291px;bottom:12px;padding:5px 7px;font-size:8px}
+ #controls{height:108px;bottom:var(--bottom-safe)}
+ #joyBase{left:14px;bottom:4px;width:92px;height:92px}#joyKnob{width:38px;height:38px}
+ #fire{right:12px;bottom:6px;width:68px;height:68px}
+ #ads{right:88px;bottom:58px;width:44px;height:44px}#reload{right:88px;bottom:7px;width:42px;height:42px}
+ #jump{right:137px;bottom:58px;width:42px;height:42px}#crouch{right:137px;bottom:7px;width:42px;height:42px}
+ #loot{right:184px;bottom:58px;width:41px;height:41px}#heal{right:184px;bottom:7px;width:41px;height:41px}
+ #smoke{right:230px;bottom:7px;width:40px;height:40px}
+ #message{left:29%;right:29%;bottom:105px;font-size:9px}#nearby{bottom:104px}
+ #killFeed{left:10px;top:120px;width:210px;font-size:8px}
+ #lookZone{left:24%;top:58px;bottom:106px}
+ .overlay .panel{max-height:88vh}
+}
+
+@media(orientation:portrait){
+ .brand{display:none}.topbar{left:8px;right:auto;top:8px;gap:4px}.stat{min-width:68px;padding:5px 7px}
+ #compass{top:55px;min-width:130px;font-size:8px}#compass b{font-size:10px}
+ #aiBanner{top:78px;max-width:calc(100vw - 18px);padding:5px 8px;font-size:8px}
+ body.game-active #mission{display:none}#mission{top:108px;left:8px}
+ body.game-active #killFeed{display:none}#killFeed{top:145px;width:48vw}
+ #gearHud{left:8px;top:108px}.gearChip{padding:3px 5px}
+ #minimap{right:8px;top:108px;width:78px;height:78px;border-radius:14px}#alive{right:14px;top:190px;font-size:8px;padding:4px 6px}
+ #brainBtn{right:8px;top:218px;bottom:auto;padding:6px 8px;font-size:9px}
+ #weaponHud{right:8px;bottom:247px;padding:6px 8px;border-radius:10px;min-width:82px}#weaponHud b{font-size:16px}
+ #bagBtn{right:8px;bottom:360px;padding:6px 8px;font-size:9px}#swapBtn{right:8px;bottom:326px;padding:6px 8px;font-size:8px}
+ #controls{height:132px;bottom:var(--bottom-safe)}
+ #joyBase{left:12px;bottom:8px;width:104px;height:104px}#joyKnob{width:42px;height:42px}
+ #fire{right:10px;bottom:10px;width:72px;height:72px}
+ #ads{right:87px;bottom:72px;width:46px;height:46px}#reload{right:87px;bottom:14px;width:44px;height:44px}
+ #jump{right:137px;bottom:72px;width:44px;height:44px}#crouch{right:137px;bottom:14px;width:44px;height:44px}
+ #loot{right:185px;bottom:72px;width:42px;height:42px}#heal{right:185px;bottom:14px;width:42px;height:42px}
+ #smoke{right:231px;bottom:14px;width:40px;height:40px}
+ #message{left:18%;right:18%;bottom:143px;font-size:9px}#nearby{bottom:176px;font-size:8px}
+ #lookZone{left:30%;top:102px;bottom:140px}
+ #tacticChip{top:102px;max-width:42vw;font-size:7px}
+ .overlay{padding:12px}.overlay .panel{width:min(420px,100%);max-height:88vh;padding:15px}.panel h2{font-size:22px}
+ .inventoryGrid{grid-template-columns:1fr}.brainActions{grid-template-columns:1fr}
+}
+
+@media(max-width:360px) and (orientation:portrait){
+ .stat{min-width:62px;padding:4px 5px}.stat b{font-size:11px}
+ #joyBase{width:96px;height:96px}
+ #fire{width:66px;height:66px}.action{font-size:8px}
+ #ads{right:78px}#reload{right:78px}#jump{right:125px}#crouch{right:125px}#loot{right:171px}#heal{right:171px}#smoke{right:215px}
+ #bagBtn,#swapBtn{right:6px}
+}
+
 </style>
 </head>
 <body>
@@ -154,7 +220,7 @@ body.portrait-bypass #portraitGate{display:none!important}
     <div class="stat">❤️ HP<b id="hp">100</b></div>
     <div class="stat">🦺 ARMOR<b id="armor">0</b></div>
     <div class="stat">⭕ ZONE<b id="zone">100%</b></div>
-    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V13</b></div>
+    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V14</b></div>
   </div>
   <div id="aiBanner">Rival AI: <strong>observing your battle behavior</strong></div>
   <div id="minimap"><div id="mapRoadA"></div><div id="mapRoadB"></div><i class="mapPoi mp1"></i><i class="mapPoi mp2"></i><i class="mapPoi mp3"></i><i class="mapPoi mp4"></i><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
@@ -179,7 +245,7 @@ body.portrait-bypass #portraitGate{display:none!important}
 
 <div class="overlay" id="dropOverlay">
   <div class="panel">
-    <div class="kicker">ADAPT-X V13 · BATTLE ROYALE FEEL PASS 1</div>
+    <div class="kicker">ADAPT-X V14 · RESPONSIVE COMBAT PASS</div>
     <h2>Choose your drop</h2>
     <p>Choose a drop zone, then descend into the map. The game will try to enter fullscreen landscape for a proper mobile battle-royale view. One Rival quietly learns how you fight and changes its tactics across matches.</p>
     <div class="landGrid">
@@ -220,7 +286,7 @@ body.portrait-bypass #portraitGate{display:none!important}
     <div id="brainRows"></div>
     <div id="hypotheses"></div>
     <p id="counterText"></p>
-    <button class="primary" id="closeBrain">BACK TO MATCH</button>
+    <div class="brainActions"><button class="primary" id="closeBrain">BACK TO MATCH</button><button class="secondaryBtn" id="resetAI">RESET LEARNED PROFILE</button></div>
   </div>
 </div>
 
@@ -292,7 +358,7 @@ window.addEventListener('unhandledrejection', function(e){
     if(window.ADAPT_X_GAME) invoke('startMatch',queuedLanding);
     else msg('Preparing drop…');
   }));
-  const map={fire:'fire',reload:'reload',loot:'loot',heal:'heal',smoke:'smoke',jump:'jump',crouch:'crouch',ads:'toggleADS',brainBtn:'openBrain',closeBrain:'closeBrain',nextMatch:'nextMatch',bagBtn:'openInventory',closeInventory:'closeInventory',swapBtn:'swapWeapon'};
+  const map={fire:'fire',reload:'reload',loot:'loot',heal:'heal',smoke:'smoke',jump:'jump',crouch:'crouch',ads:'toggleADS',brainBtn:'openBrain',closeBrain:'closeBrain',nextMatch:'nextMatch',bagBtn:'openInventory',closeInventory:'closeInventory',swapBtn:'swapWeapon',resetAI:'resetAI'};
   Object.entries(map).forEach(([id,fn])=>{
     const el=document.getElementById(id);
     if(el) el.addEventListener(id==='fire'?'pointerdown':'click',()=>invoke(fn));
@@ -303,6 +369,6 @@ window.addEventListener('unhandledrejection', function(e){
   });
 })();
 </script>
-<script type="module" src="app.js?v=13"></script>
+<script type="module" src="app.js?v=14"></script>
 </body>
 </html>
