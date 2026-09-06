@@ -1,10 +1,10 @@
 {
-  "name": "ADAPT-X V13 Battle Royale",
+  "name": "ADAPT-X V14 Responsive Combat",
   "short_name": "ADAPT-X",
   "start_url": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0b1218",
   "theme_color": "#0b1218",
-  "description": "Third-person battle royale with survival gear, enterable cover and second-order Adaptive Rival AI"
+  "description": "Responsive third-person mobile battle royale with verified survival systems and adaptive Rival AI"
 }
