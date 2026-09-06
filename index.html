@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b1218">
 <link rel="manifest" href="manifest.webmanifest">
-<title>ADAPT-X V11 — Battle Royale Feel Pass 1</title>
+<title>ADAPT-X V12 — Immersion Pass</title>
 <style>
 :root{--panel:#0b1420e8;--line:#2d435a;--text:#f6f8fb;--muted:#9db0c4;--danger:#e84b64;--good:#20c67a;--accent:#e4b65b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -93,10 +93,39 @@ button{font:inherit}
 #dropStatus{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);font-size:13px;font-weight:900;letter-spacing:.12em;text-shadow:0 2px 4px #000;display:none;pointer-events:none}
 @media (orientation:landscape){#compass{top:5px}#killFeed{top:90px}#nearby{bottom:148px}.topbar{max-width:62%}.brand{display:none}#aiBanner{right:115px}}
 
+
+/* V12 IMMERSION PASS */
+#portraitGate{display:none;position:fixed;inset:0;z-index:80;background:linear-gradient(180deg,#07111bf2,#0d1a25fa);align-items:center;justify-content:center;text-align:center;padding:28px;pointer-events:auto}
+#portraitGate .pg{max-width:360px}#portraitGate .phone{font-size:44px;display:block;animation:turn 1.8s ease-in-out infinite}@keyframes turn{50%{transform:rotate(90deg)}}#portraitGate h2{margin:14px 0 8px;font-size:24px}#portraitGate p{color:#aab9ca;font-size:12px;line-height:1.5}
+@media(orientation:portrait){#portraitGate{display:flex}#rotateHint{display:none}}
+@media(orientation:landscape){
+ .topbar{left:8px;right:auto;top:8px;gap:4px;max-width:none}.stat{min-width:62px;padding:5px 7px;border-radius:9px;background:#07111bc7}.stat b{font-size:12px}
+ #aiBanner{left:215px;right:auto;top:45px;width:min(330px,40vw);padding:5px 8px;border-radius:8px;font-size:9px;background:#07111bb8;border-color:#263a4e}
+ #mission{left:8px;top:48px;padding:5px 7px;background:#07111bb8}#mission b{font-size:10px}
+ #minimap{right:10px;top:9px;width:112px;height:112px;border-radius:16px;border:1px solid #7e91a4;background:#101d27e8;box-shadow:0 5px 15px #0007}
+ #alive{right:21px;top:126px;background:#07111bc7}
+ #brainBtn{right:120px;bottom:10px;padding:6px 8px;font-size:9px;opacity:.8}
+ #compass{top:5px;min-width:220px;font-size:9px}#compass b{font-size:12px}
+ #killFeed{top:82px;left:8px;width:225px}
+ #message{bottom:116px;font-size:10px;left:31%;right:31%}
+ #weaponHud{bottom:14px;right:92px;border-radius:9px;padding:5px 8px;background:#07111bc7}#weaponHud b{font-size:16px}
+ #nearby{bottom:102px}
+ #controls{height:110px}
+ #joyBase{left:16px;bottom:7px;width:94px;height:94px;background:#09131c8f;border-color:#8291a166}#joyKnob{width:40px;height:40px;background:#37495bba}
+ #fire{right:14px;bottom:8px;width:72px;height:72px;background:#8b3049d9}
+ #ads{right:91px;bottom:62px;width:45px;height:45px}#reload{right:91px;bottom:10px;width:43px;height:43px}
+ #jump{right:142px;bottom:62px;width:43px;height:43px}#crouch{right:142px;bottom:10px;width:43px;height:43px}
+ #loot{right:191px;bottom:62px;width:42px;height:42px}#heal{right:191px;bottom:10px;width:42px;height:42px}#smoke{right:238px;bottom:10px;width:41px;height:41px}
+ #lookZone{left:28%;top:70px;bottom:112px}
+}
+#mapRoadA,#mapRoadB{position:absolute;left:-12%;top:50%;width:125%;height:5px;background:#71808a66;transform:rotate(18deg)}#mapRoadB{transform:rotate(-26deg);top:36%}
+.mapPoi{position:absolute;width:5px;height:5px;border-radius:1px;background:#b4c2ca88}.mp1{left:28%;top:28%}.mp2{left:65%;top:30%}.mp3{left:31%;top:68%}.mp4{left:69%;top:67%}
+
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
+<div id="portraitGate"><div class="pg"><span class="phone">📱</span><h2>Rotate to landscape</h2><p>ADAPT-X is a full-screen mobile battle-royale experience. Rotate your phone to play with the complete camera, aim and combat HUD.</p></div></div>
 
 <div id="hud">
   <div id="compass"><span>NW</span><b id="heading">N 000°</b><span>NE</span></div>
@@ -105,15 +134,15 @@ button{font:inherit}
     <div class="stat">❤️ HP<b id="hp">100</b></div>
     <div class="stat">🦺 ARMOR<b id="armor">0</b></div>
     <div class="stat">⭕ ZONE<b id="zone">100%</b></div>
-    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V11</b></div>
+    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V12</b></div>
   </div>
   <div id="aiBanner">Rival AI: <strong>observing your battle behavior</strong></div>
-  <div id="minimap"><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
+  <div id="minimap"><div id="mapRoadA"></div><div id="mapRoadB"></div><i class="mapPoi mp1"></i><i class="mapPoi mp2"></i><i class="mapPoi mp3"></i><i class="mapPoi mp4"></i><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
   <div id="alive">12 ALIVE</div><div id="mission">OBJECTIVE<b>Loot · Rotate · Survive</b></div><div id="rotateHint">↻ Landscape gives the full battle view</div><div id="engineStatus">ENGINE LOADING…</div>
   <div id="crosshair"></div><div id="hitmarker"></div>
   <div id="message">Choose a landing area.</div>
   <div id="weaponHud"><small id="weaponName">PISTOL</small><b><span id="mag">12</span>/<span id="reserve">36</span></b></div>
-  <button id="brainBtn">🧠 AI</button>
+  <button id="brainBtn">🧠</button>
   <div id="lookZone"></div>
   <div id="controls">
     <div id="joyBase"><div id="joyKnob"></div></div>
@@ -130,7 +159,7 @@ button{font:inherit}
 
 <div class="overlay" id="dropOverlay">
   <div class="panel">
-    <div class="kicker">ADAPT-X V11 · BATTLE ROYALE FEEL PASS 1</div>
+    <div class="kicker">ADAPT-X V12 · BATTLE ROYALE FEEL PASS 1</div>
     <h2>Choose your drop</h2>
     <p>Choose a drop zone, then descend into the map. The game will try to enter fullscreen landscape for a proper mobile battle-royale view. One Rival quietly learns how you fight and changes its tactics across matches.</p>
     <div class="landGrid">
@@ -210,6 +239,6 @@ window.addEventListener('unhandledrejection', function(e){
   });
 })();
 </script>
-<script type="module" src="app.js?v=11"></script>
+<script type="module" src="app.js?v=12"></script>
 </body>
 </html>
