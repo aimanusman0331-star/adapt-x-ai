@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b1218">
 <link rel="manifest" href="manifest.webmanifest">
-<title>ADAPT-X V12 — Immersion Pass</title>
+<title>ADAPT-X V13 — Survival Systems</title>
 <style>
 :root{--panel:#0b1420e8;--line:#2d435a;--text:#f6f8fb;--muted:#9db0c4;--danger:#e84b64;--good:#20c67a;--accent:#e4b65b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -97,7 +97,13 @@ button{font:inherit}
 /* V12 IMMERSION PASS */
 #portraitGate{display:none;position:fixed;inset:0;z-index:80;background:linear-gradient(180deg,#07111bf2,#0d1a25fa);align-items:center;justify-content:center;text-align:center;padding:28px;pointer-events:auto}
 #portraitGate .pg{max-width:360px}#portraitGate .phone{font-size:44px;display:block;animation:turn 1.8s ease-in-out infinite}@keyframes turn{50%{transform:rotate(90deg)}}#portraitGate h2{margin:14px 0 8px;font-size:24px}#portraitGate p{color:#aab9ca;font-size:12px;line-height:1.5}
-@media(orientation:portrait){#portraitGate{display:flex}#rotateHint{display:none}}
+@media(orientation:portrait){
+ #portraitGate{display:none}
+ #rotateHint{display:block}
+ body:not(.game-active):not(.portrait-bypass) #portraitGate{display:flex}
+}
+body.game-active #portraitGate,
+body.portrait-bypass #portraitGate{display:none!important}
 @media(orientation:landscape){
  .topbar{left:8px;right:auto;top:8px;gap:4px;max-width:none}.stat{min-width:62px;padding:5px 7px;border-radius:9px;background:#07111bc7}.stat b{font-size:12px}
  #aiBanner{left:215px;right:auto;top:45px;width:min(330px,40vw);padding:5px 8px;border-radius:8px;font-size:9px;background:#07111bb8;border-color:#263a4e}
@@ -121,11 +127,25 @@ button{font:inherit}
 #mapRoadA,#mapRoadB{position:absolute;left:-12%;top:50%;width:125%;height:5px;background:#71808a66;transform:rotate(18deg)}#mapRoadB{transform:rotate(-26deg);top:36%}
 .mapPoi{position:absolute;width:5px;height:5px;border-radius:1px;background:#b4c2ca88}.mp1{left:28%;top:28%}.mp2{left:65%;top:30%}.mp3{left:31%;top:68%}.mp4{left:69%;top:67%}
 
+
+/* V13 SURVIVAL SYSTEMS */
+#gearHud{position:absolute;left:9px;top:91px;display:flex;gap:4px;pointer-events:none}
+.gearChip{background:#07111bc7;border:1px solid #2c4054;border-radius:8px;padding:4px 6px;font-size:8px;color:#9eb0c1}.gearChip b{display:block;color:#fff;font-size:9px}
+#bagBtn{position:absolute;right:12px;bottom:242px;pointer-events:auto;border:1px solid #4a5d70;background:#0b1722d9;color:#e6eef6;border-radius:10px;padding:6px 8px;font-size:10px;font-weight:900}
+#swapBtn{position:absolute;right:12px;bottom:210px;pointer-events:auto;border:1px solid #4a5d70;background:#0b1722d9;color:#e6eef6;border-radius:10px;padding:6px 8px;font-size:9px;font-weight:900}
+.inventoryGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.invCard{border:1px solid #2f465d;background:#101c29;border-radius:12px;padding:10px}.invCard small{color:#90a3b7;font-size:9px}.invCard b{display:block;margin-top:3px;font-size:13px}.gearRow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.gearBox{border:1px solid #2f465d;background:#101c29;border-radius:11px;padding:8px;text-align:center;font-size:9px;color:#91a5ba}.gearBox b{display:block;color:#fff;margin-top:3px;font-size:12px}
+#tacticChip{position:absolute;left:50%;top:79px;transform:translateX(-50%);background:#08131dc7;border:1px solid #334a60;border-radius:999px;padding:4px 8px;font-size:8px;color:#9fb0c1;display:none;pointer-events:none}
+@media(orientation:landscape){#gearHud{left:8px;top:79px}#bagBtn{right:120px;bottom:37px;padding:5px 7px}#swapBtn{right:120px;bottom:9px;padding:5px 7px}#tacticChip{top:33px}}
+@media(max-width:430px) and (orientation:portrait){#gearHud{top:93px}#bagBtn{right:12px;bottom:250px}#swapBtn{right:12px;bottom:216px}}
+
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="portraitGate"><div class="pg"><span class="phone">📱</span><h2>Rotate to landscape</h2><p>ADAPT-X is a full-screen mobile battle-royale experience. Rotate your phone to play with the complete camera, aim and combat HUD.</p></div></div>
+<div id="portraitGate"><div class="pg"><span class="phone">📱</span><h2>Rotate to landscape</h2>
+<p>Landscape gives the full battle view. Rotate your phone, or continue in portrait without blocking the match.</p>
+<button id="continuePortrait" class="primary" type="button" style="margin-top:14px">CONTINUE ANYWAY</button>
+</div></div>
 
 <div id="hud">
   <div id="compass"><span>NW</span><b id="heading">N 000°</b><span>NE</span></div>
@@ -134,15 +154,15 @@ button{font:inherit}
     <div class="stat">❤️ HP<b id="hp">100</b></div>
     <div class="stat">🦺 ARMOR<b id="armor">0</b></div>
     <div class="stat">⭕ ZONE<b id="zone">100%</b></div>
-    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V12</b></div>
+    <div class="brand"><small>ADAPTIVE BATTLE ROYALE</small><b>ADAPT-X V13</b></div>
   </div>
   <div id="aiBanner">Rival AI: <strong>observing your battle behavior</strong></div>
   <div id="minimap"><div id="mapRoadA"></div><div id="mapRoadB"></div><i class="mapPoi mp1"></i><i class="mapPoi mp2"></i><i class="mapPoi mp3"></i><i class="mapPoi mp4"></i><div id="mapZone"></div><div id="mapPlayer"></div><div id="mapRival"></div></div>
-  <div id="alive">12 ALIVE</div><div id="mission">OBJECTIVE<b>Loot · Rotate · Survive</b></div><div id="rotateHint">↻ Landscape gives the full battle view</div><div id="engineStatus">ENGINE LOADING…</div>
+  <div id="alive">12 ALIVE</div><div id="gearHud"><div class="gearChip">🪖<b id="helmetHud">0</b></div><div class="gearChip">🎒<b id="backpackHud">Lv0</b></div></div><div id="tacticChip"></div><div id="mission">OBJECTIVE<b>Loot · Rotate · Survive</b></div><div id="rotateHint">↻ Landscape gives the full battle view</div><div id="engineStatus">ENGINE LOADING…</div>
   <div id="crosshair"></div><div id="hitmarker"></div>
   <div id="message">Choose a landing area.</div>
   <div id="weaponHud"><small id="weaponName">PISTOL</small><b><span id="mag">12</span>/<span id="reserve">36</span></b></div>
-  <button id="brainBtn">🧠</button>
+  <button id="brainBtn">🧠</button><button id="bagBtn">🎒 BAG</button><button id="swapBtn">⇄ SWAP</button>
   <div id="lookZone"></div>
   <div id="controls">
     <div id="joyBase"><div id="joyKnob"></div></div>
@@ -159,7 +179,7 @@ button{font:inherit}
 
 <div class="overlay" id="dropOverlay">
   <div class="panel">
-    <div class="kicker">ADAPT-X V12 · BATTLE ROYALE FEEL PASS 1</div>
+    <div class="kicker">ADAPT-X V13 · BATTLE ROYALE FEEL PASS 1</div>
     <h2>Choose your drop</h2>
     <p>Choose a drop zone, then descend into the map. The game will try to enter fullscreen landscape for a proper mobile battle-royale view. One Rival quietly learns how you fight and changes its tactics across matches.</p>
     <div class="landGrid">
@@ -168,6 +188,27 @@ button{font:inherit}
       <button class="land" data-land="farm">GREEN FARM<small>safe · balanced loot</small></button>
       <button class="land" data-land="harbor">HARBOR<small>medium · open sightlines</small></button>
     </div>
+  </div>
+</div>
+
+
+<div class="overlay hidden" id="inventoryOverlay">
+  <div class="panel">
+    <div class="kicker">SURVIVAL LOADOUT</div>
+    <h2>Inventory</h2>
+    <div class="gearRow">
+      <div class="gearBox">🪖 HELMET<b id="invHelmet">Lv0</b></div>
+      <div class="gearBox">🦺 VEST<b id="invVest">0%</b></div>
+      <div class="gearBox">🎒 BAG<b id="invBag">Lv0</b></div>
+    </div>
+    <div class="inventoryGrid">
+      <div class="invCard"><small>PRIMARY</small><b id="slotPrimary">PISTOL</b><span id="ammoPrimary">12 / 36</span></div>
+      <div class="invCard"><small>SECONDARY</small><b id="slotSecondary">EMPTY</b><span id="ammoSecondary">—</span></div>
+      <div class="invCard"><small>MEDICAL</small><b id="invMeds">1 Medkit</b></div>
+      <div class="invCard"><small>THROWABLE</small><b id="invSmokes">0 Smoke</b></div>
+    </div>
+    <p class="muted">Looting under blue-zone pressure is also part of the Adaptive Rival's player model.</p>
+    <button class="primary" id="closeInventory">BACK TO MATCH</button>
   </div>
 </div>
 
@@ -215,6 +256,28 @@ window.addEventListener('unhandledrejection', function(e){
 (function(){
   window.__ADAPTX_BOOTSTRAP__=true;
   let queuedLanding=null;
+  const markGameActive=()=>{
+    document.body.classList.add('game-active');
+    const gate=document.getElementById('portraitGate');
+    if(gate) gate.style.display='none';
+  };
+  const continuePortrait=document.getElementById('continuePortrait');
+  if(continuePortrait) continuePortrait.addEventListener('click',()=>{
+    document.body.classList.add('portrait-bypass');
+    const gate=document.getElementById('portraitGate');
+    if(gate) gate.style.display='none';
+  });
+  const syncOrientationUI=()=>{
+    const gate=document.getElementById('portraitGate');
+    if(!gate) return;
+    const portrait=window.innerHeight>=window.innerWidth;
+    const active=document.body.classList.contains('game-active');
+    const bypass=document.body.classList.contains('portrait-bypass');
+    gate.style.display=(portrait && !active && !bypass)?'flex':'none';
+  };
+  window.addEventListener('resize',syncOrientationUI);
+  window.addEventListener('orientationchange',syncOrientationUI);
+  syncOrientationUI();
   const msg=(t)=>{const e=document.getElementById('message'); if(e)e.textContent=t};
   const invoke=(name,...args)=>{
     const api=window.ADAPT_X_GAME;
@@ -224,11 +287,12 @@ window.addEventListener('unhandledrejection', function(e){
     return false;
   };
   document.querySelectorAll('[data-land]').forEach(btn=>btn.addEventListener('click',()=>{
+    markGameActive();
     queuedLanding=btn.dataset.land;
     if(window.ADAPT_X_GAME) invoke('startMatch',queuedLanding);
     else msg('Preparing drop…');
   }));
-  const map={fire:'fire',reload:'reload',loot:'loot',heal:'heal',smoke:'smoke',jump:'jump',crouch:'crouch',ads:'toggleADS',brainBtn:'openBrain',closeBrain:'closeBrain',nextMatch:'nextMatch'};
+  const map={fire:'fire',reload:'reload',loot:'loot',heal:'heal',smoke:'smoke',jump:'jump',crouch:'crouch',ads:'toggleADS',brainBtn:'openBrain',closeBrain:'closeBrain',nextMatch:'nextMatch',bagBtn:'openInventory',closeInventory:'closeInventory',swapBtn:'swapWeapon'};
   Object.entries(map).forEach(([id,fn])=>{
     const el=document.getElementById(id);
     if(el) el.addEventListener(id==='fire'?'pointerdown':'click',()=>invoke(fn));
@@ -239,6 +303,6 @@ window.addEventListener('unhandledrejection', function(e){
   });
 })();
 </script>
-<script type="module" src="app.js?v=12"></script>
+<script type="module" src="app.js?v=13"></script>
 </body>
 </html>
