@@ -154,3 +154,41 @@ export function equipmentDamage(raw,armor,helmet=0,headshot=false){
   const armorBlock=Math.min(armor,afterHelmet*.42);
   return {dealt:afterHelmet-armorBlock,armorUsed:armorBlock,helmetUsed:helmetBlock};
 }
+
+
+export function equipWeaponState(state,def){
+  const next=structuredClone(state);
+  const current={weapon:next.weapon,mag:next.mag,reserve:next.reserve,damage:next.damage,range:next.range,acc:next.acc};
+  next.secondary=current;
+  next.weapon=def.label;next.mag=def.mag;next.reserve=def.reserve;next.damage=def.damage;next.range=def.range;next.acc=def.acc;
+  return next;
+}
+
+export function swapWeaponState(state){
+  if(!state.secondary)return {state:structuredClone(state),swapped:false};
+  const next=structuredClone(state);
+  const current={weapon:next.weapon,mag:next.mag,reserve:next.reserve,damage:next.damage,range:next.range,acc:next.acc};
+  const other=next.secondary;next.secondary=current;
+  Object.assign(next,other);
+  return {state:next,swapped:true};
+}
+
+export function applyPickupState(state,type,def={}){
+  let next=structuredClone(state);
+  if(def.weapon)return equipWeaponState(next,def);
+  if(type==='ARMOR')next.armor=Math.min(100,(next.armor||0)+55);
+  else if(type==='HELMET'){next.helmetLevel=Math.min(3,(next.helmetLevel||0)+1);next.helmet=Math.min(100,(next.helmet||0)+45)}
+  else if(type==='BACKPACK')next.backpackLevel=Math.min(3,(next.backpackLevel||0)+1);
+  else if(type==='MED')next.meds=Math.min(4+(next.backpackLevel||0)*2,(next.meds||0)+1);
+  else if(type==='SMOKE')next.smokes=Math.min(2+(next.backpackLevel||0)*2,(next.smokes||0)+1);
+  return next;
+}
+
+export function useMedkitState(hp,meds,heal=42){
+  if(meds<=0||hp>=95)return {hp,meds,used:false};
+  return {hp:Math.min(100,hp+heal),meds:meds-1,used:true};
+}
+
+export function consumeSmokeState(smokes){
+  return smokes>0?{smokes:smokes-1,used:true}:{smokes,used:false};
+}
