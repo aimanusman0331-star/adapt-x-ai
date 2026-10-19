@@ -22,6 +22,22 @@ jobs:
           node --check sw.js
       - name: Core gameplay and UI smoke tests
         run: node qa-smoke.mjs
+      - name: Install browser testing tools
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Browser smoke tests
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 &
+          sleep 2
+          node qa-browser.mjs
+      - name: Upload QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adaptx-browser-screenshots
+          path: qa-artifacts/
+          if-no-files-found: ignore
       - name: Critical asset and version checks
         run: |
           node --input-type=module <<'EOF'
