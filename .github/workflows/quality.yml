@@ -20,6 +20,8 @@ jobs:
           node --check app.js
           node --check core.mjs
           node --check sw.js
+      - name: Core gameplay and UI smoke tests
+        run: node qa-smoke.mjs
       - name: Critical asset and version checks
         run: |
           node --input-type=module <<'EOF'
