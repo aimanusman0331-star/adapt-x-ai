@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {clamp,pointCollides,safeSpawn,segmentBlocked,resolveCameraT,emptyProfile,recordBehavior,classifyRange,applyDamage,reloadAmmo,shrinkZone} from './core.mjs';
+const obstacles=[{x:0,z:0,hw:2,hd:2}];
+assert.equal(clamp(10,0,5),5);
+assert.equal(pointCollides(0,0,obstacles),true);
+assert.equal(pointCollides(10,10,obstacles),false);
+const spawn=safeSpawn({x:0,z:0},obstacles);assert.equal(pointCollides(spawn.x,spawn.z,obstacles,1.4),false);
+assert.equal(segmentBlocked(-5,0,5,0,obstacles),true);
+assert.equal(segmentBlocked(-5,5,5,5,obstacles),false);
+assert.ok(resolveCameraT(-5,0,5,0,obstacles)<1);
+assert.equal(classifyRange(10),'close');
+assert.ok(applyDamage(100,50,20).hp<=100);
+assert.equal(reloadAmmo(4,20,12).mag,12);
+assert.equal(shrinkZone(54,19,7),47);
+let p=emptyProfile(),b=null,recent=[];
+for(let i=0;i<16;i++){let x=recordBehavior(p,b,recent,'push');p=x.profile;b=x.baseline;recent=x.recent;}
+assert.ok(b);assert.equal(p.observations,16);
+const html=fs.readFileSync('index.html','utf8');
+for(const id of ['game','portraitGate','brainBtn','bagBtn','swapBtn'])assert.ok(html.includes('id="'+id+'"'),'Missing UI '+id);
+const version=html.match(/app\.js\?v=([\d.]+)/)?.[1];
+assert.ok(version,'Missing app version');
+const sw=fs.readFileSync('sw.js','utf8');
+assert.ok(sw.includes('app.js?v='+version),'SW app version mismatch');
+assert.ok(sw.includes('core.mjs?v='+version),'SW core version mismatch');
+console.log('PASS: ADAPT-X core/UI smoke tests');
